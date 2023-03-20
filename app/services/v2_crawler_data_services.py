@@ -9,7 +9,7 @@ import app.config as config
 
 class V2CrawlDataService:
     def __init__(self):
-        self.__v2_crawler_post = models.V2CrawlerPost()
+        self.__v2_crawler_post = models.v2_crawl_data_model.V2CrawlerPost()
 
     def crawl_data_from_facebook(self) -> List[Dict]:
         all_posts: List[Dict] = []
