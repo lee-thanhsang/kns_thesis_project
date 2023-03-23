@@ -46,5 +46,5 @@ function addChatEntry(input, product) {
    
     setTimeout(() => {
       botText.innerText = `${product}`;
-    }, 2000); 
+    }, 2000);
 }
