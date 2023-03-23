@@ -8,7 +8,7 @@ Chatbot with service intent_classification_and_slot_filling
   
   c. python server.py
 
-2. Run chatbot app: http://127.0.0.1:5000
+2/ Run chatbot app: http://127.0.0.1:5000
 
   a. cd app
   
