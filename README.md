@@ -1,7 +1,15 @@
-To run this repo:
+Chatbot with service intent_classification_and_slot_filling
 
-pip install flask
+1/ Run server for predict intent:
 
-cd app
+  a. Open a new terminal
+  
+  b. cd intent_slot_service
+  
+  c. python server.py
 
-flask run
+2. Run chatbot app: http://127.0.0.1:5000
+
+  a. cd app
+  
+  b. flask run
