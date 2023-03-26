@@ -8,7 +8,8 @@ class V2ResponseSentenceService:
         pass
 
     def get_intent_and_slot_from_sentence(self, sentence):
-        return intent_slot_service.main(sentence)
+        # return intent_slot_service.main(sentence)
+        return '1'
 
     # def make_response_sentence(self, data):
     #     raw_intent = data.get('intent', False)
