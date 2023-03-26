@@ -1,7 +1,7 @@
 # import pattern_responce_sentence as pattern_responce_sentence
 import app.services.pattern_responce_sentence as pattern_responce_sentence
 import random
-import intent_slot_service.client as intent_slot_service
+# import intent_slot_service.client as intent_slot_service
 
 class V2ResponseSentenceService:
     def __init__(self):
