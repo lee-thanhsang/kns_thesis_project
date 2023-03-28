@@ -18,3 +18,4 @@ class IntentSlotServiceClient:
         data = json.loads(res.message)
         return (data['intent'], data['slot'])
     
+    

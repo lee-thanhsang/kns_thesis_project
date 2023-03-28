@@ -1,4 +1,5 @@
 import math
+import copy
 
 MATCH_RATE = 5/6
 
@@ -14,7 +15,7 @@ initial_query = {
 
 class QueryBuilder:
     def __init__(self):
-        self.__query = initial_query
+        self.__query = copy.deepcopy(initial_query)
 
     def add(self, cond_type, match_type, field, value):
         if field != 'name':

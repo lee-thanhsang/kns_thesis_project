@@ -6,14 +6,17 @@ import utils.querier.query_builder as query_builder
 
 no_query_keys = ['number', 'register:way', 'job_description']
 
+SCORE_RATE = 0.9
+
 
 class Querier:
+    searcher = searcher.Searcher()
+
     def __init__(self):
         self.cached_db_slot = defaultdict(dict)
         self.cached_db = defaultdict(dict)
         self.no_query = no_query_keys
-        self.__searcher = searcher.Searcher()
-        self.__query_builder = query_builder.QueryBuilder()
+        # Querier.searcher = searcher.Searcher()
         # self.match_key = usersim_default_key
 
     def fill_inform_slot(self, inform_slot_to_fill, current_inform_slots):
@@ -47,8 +50,16 @@ class Querier:
         if len(db_results) == 0:
             filled_inform[key] = 'no match available'
         else:
-            highest_activity = db_results[list(db_results.keys())[0]]
-            value = highest_activity.get(key, 'no match available')
+            highest_score = db_results[list(db_results.keys())[0]]['_score']
+            i = 0
+            value = None
+            while i < len(db_results) and not value and db_results[list(db_results.keys())[i]]['_score'] >= highest_score * SCORE_RATE:
+                value = db_results[list(db_results.keys())[i]]['_source'].get(key)
+                i =+ 1
+
+            if not value:
+                value = 'no match available'
+
             if not isinstance(value, str):
                 filled_inform[key] = max(value, key=len)
             else:
@@ -122,15 +133,18 @@ class Querier:
         # print(new_constraints)
 
         available_options = {}
+        query = query_builder.QueryBuilder()
         for k, v in new_constraints.items():
-            self.__query_builder.add('must', 'match', k, v.replace('_', ' '))
+            # self.query_builder.add('must', 'match', k, v.replace('_', ' '))
+            query.add('must', 'match', k, v.replace('_', ' '))
 
-        activities = self.__searcher.search(self.__query_builder.get_query())
+        # activities = Querier.searcher.search(self.query_builder.get_query())
+        activities = Querier.searcher.search(query.get_query())
         for item in activities:
             self.cached_db[inform_items].update(
-                {item['_id']: item['_source']})
+                {item['_id']: item})
             available_options.update(
-                {item['_id']: item['_source']})
+                {item['_id']: item})
         #     print(activity_map[item['_id']])
         # raise
         # for id in self.database.keys():
@@ -195,7 +209,8 @@ class Querier:
             if CI_key in self.no_query:
                 continue
             if CI_value == 'anything':
-                db_results[CI_key] = int(len(self.__searcher.search(query.get_query())))
+                db_results[CI_key] = int(
+                    len(Querier.searcher.search(query.get_query())))
             else:
                 local_query = query_builder.QueryBuilder()
                 local_query.add(
@@ -203,11 +218,11 @@ class Querier:
                 query.add(
                     'must', 'match', CI_key, CI_value.replace('_', ' '))
                 db_results[CI_key] = int(
-                    len(self.__searcher.search(local_query.get_query())))
+                    len(Querier.searcher.search(local_query.get_query())))
 
         # Get all documents match all constraints
         db_results['matching_all_constraints'] = int(
-            len(self.__searcher.search(query.get_query())))
+            len(Querier.searcher.search(query.get_query())))
 
         # for id in self.database.keys():
         #     all_slots_match = True

@@ -1,5 +1,4 @@
-from collections import defaultdict
-from utils.querier import *
+from utils.querier import querier
 import copy
 import numpy
 
@@ -26,9 +25,11 @@ class StateTracker:
         self.num_slots = len(all_slots)
         self.max_round_num = 10
         self.none_state = numpy.zeros(self.get_state_size())
+        self.current_informs = {}
         self.user_requests = []
         self.cur_action = {}
         self.answer = {}
+        self.history = []
         self.reset()
 
     def get_state_size(self):
@@ -39,13 +40,16 @@ class StateTracker:
     def reset(self):
         """Resets current_informs, history, round_num and user_requests"""
 
-        self.current_informs = {}
+        # self.current_informs = {}
         # A list of the dialogues (dicts) by the agent and user so far in the conversation
-        self.history = []
+        # self.history = []
         self.round_num = 0
-        self.user_requests = []
+        # self.user_requests = []
         self.cur_action = {}
         self.answer = {}
+
+    def reset_user_requests(self):
+        self.user_requests = []
 
     def print_history(self):
         """Helper function if you want to see the current history action by action."""
@@ -203,12 +207,14 @@ class StateTracker:
         self.set_cur_action(user_action)
 
     def add_user_requests(self, request):
-        user_request = {}
-        user_request['request'] = request
-        self.user_requests.append(user_request)
+        self.user_requests.append(request)
 
-    def remove_user_requests(self, request):
-        self.user_requests = list(filter(lambda val: val['request'] != request, self.user_requests))
+    def remove_user_requests(self, request = None):
+        if request is None:
+            self.user_requests = []
+            return
+        
+        self.user_requests = list(filter(lambda val: list(val.keys())[0] != request, self.user_requests))
 
     def get_first_user_request(self):
         if len(self.user_requests) == 0:
@@ -231,6 +237,8 @@ class StateTracker:
     def reset_answer(self):
         self.answer = {}
 
+    def reset_current_informs(self):
+        self.current_informs = {}
 
 def convert_list_to_dict(lst):
     if len(lst) > len(set(lst)):
