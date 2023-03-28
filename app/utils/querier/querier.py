@@ -128,9 +128,9 @@ class Querier:
         activities = self.__searcher.search(self.__query_builder.get_query())
         for item in activities:
             self.cached_db[inform_items].update(
-                {item['_id']: item})
+                {item['_id']: item['_source']})
             available_options.update(
-                {item['_id']: item})
+                {item['_id']: item['_source']})
         #     print(activity_map[item['_id']])
         # raise
         # for id in self.database.keys():

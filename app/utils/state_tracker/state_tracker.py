@@ -26,6 +26,9 @@ class StateTracker:
         self.num_slots = len(all_slots)
         self.max_round_num = 10
         self.none_state = numpy.zeros(self.get_state_size())
+        self.user_requests = []
+        self.cur_action = {}
+        self.answer = {}
         self.reset()
 
     def get_state_size(self):
@@ -34,12 +37,15 @@ class StateTracker:
         return 2 * self.num_intents + 7 * self.num_slots + 3 + self.max_round_num
 
     def reset(self):
-        """Resets current_informs, history and round_num."""
+        """Resets current_informs, history, round_num and user_requests"""
 
         self.current_informs = {}
         # A list of the dialogues (dicts) by the agent and user so far in the conversation
         self.history = []
         self.round_num = 0
+        self.user_requests = []
+        self.cur_action = {}
+        self.answer = {}
 
     def print_history(self):
         """Helper function if you want to see the current history action by action."""
@@ -174,6 +180,7 @@ class StateTracker:
             # self.current_informs[self.match_key] = agent_action['inform_slots'][self.match_key]
         agent_action.update({'round': self.round_num, 'speaker': 'Agent'})
         self.history.append(agent_action)
+        self.set_cur_action(agent_action)
 
     def update_state_user(self, user_action):
         """
@@ -193,6 +200,36 @@ class StateTracker:
         user_action.update({'round': self.round_num, 'speaker': 'User'})
         self.history.append(user_action)
         self.round_num += 1
+        self.set_cur_action(user_action)
+
+    def add_user_requests(self, request):
+        user_request = {}
+        user_request['request'] = request
+        self.user_requests.append(user_request)
+
+    def remove_user_requests(self, request):
+        self.user_requests = list(filter(lambda val: val['request'] != request, self.user_requests))
+
+    def get_first_user_request(self):
+        if len(self.user_requests) == 0:
+            return
+        
+        return self.user_requests[0]
+    
+    def set_cur_action(self, action):
+        self.cur_action = action
+
+    def get_cur_action(self):
+        return self.cur_action
+    
+    def set_answer(self):
+        self.answer = self.cur_action
+
+    def get_answer(self):
+        return self.answer
+    
+    def reset_answer(self):
+        self.answer = {}
 
 
 def convert_list_to_dict(lst):
