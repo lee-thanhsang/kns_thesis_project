@@ -1,2 +1,4 @@
 app/venv
 __pycache__
+intent_slot_service
+action_decider_service

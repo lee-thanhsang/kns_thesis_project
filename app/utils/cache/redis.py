@@ -9,4 +9,4 @@ class Redis:
         self.__redis.set(key, value, ex=900)
 
     def get_value_from_key(self, key: str) -> str:
-        return self.__redis.get(key).decode('utf-8')
+        return self.__redis.get(key)

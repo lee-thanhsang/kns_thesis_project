@@ -169,7 +169,7 @@ class EsClient:
         self.__client.create(index=index_name, id=id, document=data)
 
     def search(self, index_name, query):
-        return self.__client.search(index=index_name, query=query)
+        return self.__client.search(index=index_name, query=query, size=1000)
     
     def count(self, index_name, query):
         return self.__client.count(index=index_name, query=query)
