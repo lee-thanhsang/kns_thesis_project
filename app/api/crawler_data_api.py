@@ -1,6 +1,6 @@
 from flask import Blueprint
 from flask import Flask, request, render_template, redirect
-import services as services
+import app.services as services
 
 crawler_routes = Blueprint("crawler_routes", __name__)
 

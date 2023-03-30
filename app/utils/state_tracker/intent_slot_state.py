@@ -1,4 +1,4 @@
-from utils.state_tracker.state_tracker import *
+from app.utils.state_tracker.state_tracker import *
 
 
 class IntentSlotState:

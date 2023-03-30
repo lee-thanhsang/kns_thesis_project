@@ -3,7 +3,8 @@ import underthesea
 import json
 import sys
 import numpy as np
-sys.path.append('../action_decider_service')
+
+sys.path.append('C:/thesis/kns_fecth_data/action_decider_service')
 
 import action_decider_service_pb2_grpc
 import action_decider_service_pb2

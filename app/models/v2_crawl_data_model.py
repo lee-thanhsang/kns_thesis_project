@@ -1,6 +1,6 @@
 from pymodm import MongoModel, fields
 from typing import List, Dict
-from models.common import V2Database
+from app.models.common import V2Database
 
 
 class V2RawPostModel(MongoModel):

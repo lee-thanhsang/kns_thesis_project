@@ -1,11 +1,11 @@
 # import pattern_responce_sentence as pattern_responce_sentence
-import services.pattern_responce_sentence as pattern_responce_sentence
+import app.services.pattern_responce_sentence as pattern_responce_sentence
 import random
-from utils.state_tracker.state_tracker import StateTracker
-from utils.state_tracker.intent_slot_state import *
-from utils.cookie.cookie_generator import *
+from app.utils.state_tracker.state_tracker import StateTracker
+from app.utils.state_tracker.intent_slot_state import *
+from app.utils.cookie.cookie_generator import *
 import pickle
-# import intent_slot_service.client as intent_slot_service
+
 
 class V2ResponseSentenceService:
     def __init__(
@@ -36,6 +36,10 @@ class V2ResponseSentenceService:
         intent, slot = self.__intent_slot_svc_cli.get_intent_and_slot(message)
         print(intent, slot)
 
+        # If intent is greeting or complete, just return responce
+        if intent in ['greeting', 'complete']:
+            return {'intent': intent, 'request_slots': {}, 'inform_slots': {}}, user_id
+        
         inform_slots = slot
         request_slots = {}
         if intent not in ['inform', 'greeting', 'complete', 'meaningless']:
@@ -68,33 +72,41 @@ class V2ResponseSentenceService:
             if state_tracker.get_first_user_request() is None:
                 state_tracker.reset()
 
-        answer = state_tracker.get_cur_action()
-        if answer:
-            print('question ', answer)
+        question = state_tracker.get_cur_action()
+        if question:
+            print('question ', question)
 
         self.__redis.set_key_value(user_id + ':db_helper', pickle.dumps(state_tracker.db_helper))
         delattr(state_tracker, 'db_helper')
         self.__redis.set_key_value(user_id + ':state_tracker', pickle.dumps(state_tracker))
-        return str(answer), user_id
+        return answer if answer else question, user_id
 
-    # def make_response_sentence(self, data):
-    #     raw_intent = data.get('intent', False)
-    #     inform_slots = list(data.get('inform_slots', False).items()) if data.get('inform_slots', False) else []
-    #     request_slots = list(data.get('request_slots', False).items()) if data.get('request_slots', False) else []
+    def make_response_sentence(self, data):
+        raw_intent = data.get('intent', False)
+        
+        if raw_intent in ['request', 'inform']:
+            intent = None
+            value = None
+            if raw_intent == 'request':
+                request_slots = list(data.get('request_slots', False).items())[0]
+                intent = request_slots[0].replace(':', '_') + '_' + raw_intent
 
-    #     intent = None
-    #     value = None
-    #     if raw_intent == 'request':
-    #         intent = request_slots[0][0] + '_' + raw_intent
+            if raw_intent == 'inform':
+                inform_slots = list(data.get('inform_slots', False).items())[0]
+                intent = inform_slots[0].replace(':', '_')
+                value = inform_slots[1]
 
-    #     if raw_intent == 'inform':
-    #         intent = inform_slots[0][0]
-    #         value = inform_slots[0][1]
+            sentence = self.get_pattern_responce_sentence(intent)
 
-    #     pattern_sentence = random.sample(getattr(pattern_responce_sentence, intent), 1)[0]
-    #     return pattern_sentence.replace('KEYWORD', value if value else '')
+            return sentence.replace('KEYWORD', value if value else '')
 
-    # def output_responce_sentence(self, sentence):
-    #     data = self.get_intent_and_slot_from_sentence(sentence)
-    #     responce_sentence = self.make_response_sentence(data)
-    #     return responce_sentence
+        elif raw_intent in ['complete', 'thanks', 'done']:
+            sentence = self.get_pattern_responce_sentence('complete')
+            return sentence
+        
+        elif raw_intent == 'greeting':
+            sentence = self.get_pattern_responce_sentence('greeting')
+            return sentence
+
+    def get_pattern_responce_sentence(self, intent):
+        return random.sample(getattr(pattern_responce_sentence, intent), 1)[0]
