@@ -1,11 +1,11 @@
-fullname = [
+name = [
     'Sự kiện bạn cần tìm là KEYWORD.',
     'Sự kiện phù hợp cho bạn là KEYWORD.',
     'Hoạt động bạn cần tìm là KEYWORD.',
     'Sự kiện thích hợp cho bạn là KEYWORD.'
 ]
 
-fullname_request = [
+name_request = [
     'Bạn có biết tên của hoạt động này đó là gì không á?',
     'Bạn cho ad biết tên của hoạt động đó được không?',
     'Bạn ơi, ad cần thêm thông tin về tên của hoạt động á, bạn có biết hoạt động tên gì không?',

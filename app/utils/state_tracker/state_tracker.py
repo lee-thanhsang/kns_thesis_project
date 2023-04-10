@@ -1,4 +1,4 @@
-from utils.querier import querier
+from app.utils.querier import querier
 import copy
 import numpy
 
@@ -84,6 +84,11 @@ class StateTracker:
 
         # Create one-hot of intents to represent the current user action
         user_act_rep = numpy.zeros((self.num_intents,))
+        
+        # Sang adjust code here ###############
+        # if user_action['intent'] == 'complete':
+        #     user_action.update({'intent': 'thanks'})
+
         user_act_rep[self.intents_dict[user_action['intent']]] = 1.0
 
         # Create bag of inform slots representation to represent the current user action

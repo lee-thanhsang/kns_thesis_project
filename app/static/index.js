@@ -2,19 +2,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputField = document.querySelector("#input");
     inputField.addEventListener("keydown", async function(e) {
         if (e.code === "Enter") {
-            let input = inputField.value;
+            let userMessage = inputField.value;
             inputField.value = "";
 
-            output(input);
+            output(userMessage);
         }
     });
 });
 
-async function output(input) {
-    let formData = new FormData();
-    formData.append('sentence', input);
+async function output(userMessage) {
+    botText = addUserEntry(userMessage);
 
-    result = await fetch('http://127.0.0.1:5000/v2/get-responce-sentence', {
+    let formData = new FormData();
+    formData.append('sentence', userMessage);
+
+    result = await fetch('http://127.0.0.1:5000/v2/get-response-sentence', {
             method: 'POST',
             body: formData,
     }).then((response) => {
@@ -24,18 +26,18 @@ async function output(input) {
         return response.json();
     });
 
-    addChatEntry(input, result['sentence']);
+    addBotEntry(botText, result['sentence']);
 }
 
-function addChatEntry(input, product) {
+function addUserEntry(userMessage) {
     const messagesContainer = document.getElementById("messages");
     
     let userDiv = document.createElement("div");
     userDiv.id = "user";
     userDiv.className = "user response";
-    userDiv.innerHTML = `${input}`;
+    userDiv.innerHTML = `${userMessage}`;
     messagesContainer.appendChild(userDiv);
-   
+
     let botDiv = document.createElement("div");
     let botText = document.createElement("span");
     botDiv.id = "bot";
@@ -43,8 +45,10 @@ function addChatEntry(input, product) {
     botText.innerText = "Typing...";
     botDiv.appendChild(botText);
     messagesContainer.appendChild(botDiv);
-   
-    setTimeout(() => {
-      botText.innerText = `${product}`;
-    }, 2000);
+
+    return botText
+}
+
+function addBotEntry(botText, botMessage) {   
+    botText.innerText = `${botMessage}`;
 }

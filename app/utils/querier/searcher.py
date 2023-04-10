@@ -1,5 +1,5 @@
-from utils.querier.query_builder import *
-from utils.es_client import *
+from app.utils.querier.query_builder import *
+from app.utils.es_client import *
 
 
 class Searcher:

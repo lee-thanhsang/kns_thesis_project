@@ -1,7 +1,7 @@
 from collections import defaultdict
 import copy
-import utils.querier.searcher as searcher
-import utils.querier.query_builder as query_builder
+import app.utils.querier.searcher as searcher
+import app.utils.querier.query_builder as query_builder
 
 
 no_query_keys = ['number', 'register:way', 'job_description']

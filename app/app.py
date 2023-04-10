@@ -1,5 +1,6 @@
-# from flask import Flask
-# from api import crawler_data_api, chat_bot_api
+from flask import Flask
+from app.api import crawler_data_api, chat_bot_api
+
 
 # app = Flask(__name__, template_folder="templates")
 
