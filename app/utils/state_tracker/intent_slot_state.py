@@ -1,4 +1,4 @@
-from app.utils.state_tracker.state_tracker import *
+from utils.state_tracker.state_tracker import *
 
 
 class IntentSlotState:
@@ -22,9 +22,18 @@ class UserInformState(IntentSlotState):
 
     def update_state_tracker(self, state_tracker: StateTracker):
         user_action = self.action
-        request = state_tracker.get_first_user_request()
-        if request is not None:
-            user_action['request_slots'] = request
+        user_request = state_tracker.get_first_user_request()
+        if user_request is not None:
+            user_action['request_slots'] = user_request
+
+        agent_request = state_tracker.last_agent_request
+        if agent_request is not None:
+            sub_keys = get_sub_keys(agent_request)
+            for sub_key in sub_keys:
+                if sub_key not in user_action['inform_slots'].keys():
+                    user_action['inform_slots'][sub_key] = 'anything'
+
+            state_tracker.reset_last_agent_request()
 
         state_tracker.update_state_user(user_action)
         return state_tracker
@@ -37,6 +46,7 @@ class UserRequestState(IntentSlotState):
     def update_state_tracker(self, state_tracker: StateTracker):
         user_action = self.action
         if 'name' in state_tracker.current_informs.keys() and 'name' in self.action['inform_slots']:
+            # [FUTURE FIX] use fuzzy to compare name between activities.
             if self.action['inform_slots']['name'] != state_tracker.current_informs['name']:
                 print(self.action['inform_slots']['name'],
                       state_tracker.current_informs['name'])
@@ -105,6 +115,16 @@ class AgentDoneState(IntentSlotState):
         state_tracker.remove_user_requests()
         return state_tracker
 
+class AgentThankState(IntentSlotState):
+    def __init__(self, intent, request_slots, inform_slots):
+        super().__init__(intent, request_slots, inform_slots)
+
+    def update_state_tracker(self, state_tracker: StateTracker):
+        agent_action = self.action
+        state_tracker.update_state_agent(agent_action)
+        state_tracker.reset()
+        state_tracker.remove_user_requests()
+        return state_tracker
 
 class AgentDefaultState(IntentSlotState):
     def __init__(self, intent, request_slots, inform_slots):
@@ -136,6 +156,7 @@ intent_slot_state_factory_map = {
     'agent': {
         'inform': AgentInformState,
         'request': AgentRequestState,
+        'thank': AgentThankState,
         'default': AgentDefaultState,
     },
     'default': DefaultState,

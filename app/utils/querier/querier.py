@@ -1,16 +1,18 @@
 from collections import defaultdict
 import copy
-import app.utils.querier.searcher as searcher
-import app.utils.querier.query_builder as query_builder
+import utils.querier.searcher as searcher
+import utils.querier.query_builder as query_builder
+import utils.filter.filter as activity_filter
 
 
 no_query_keys = ['number', 'register:way', 'job_description']
 
-SCORE_RATE = 0.9
+FILL_INFORM_SCORE_RATE = 0.8
 
 
 class Querier:
     searcher = searcher.Searcher()
+    a_filter = activity_filter.ActivityFilter()
 
     def __init__(self):
         self.cached_db_slot = defaultdict(dict)
@@ -35,35 +37,43 @@ class Querier:
         """
 
         # For this simple system only one inform slot should ever passed in
-        assert len(inform_slot_to_fill) == 1
+        keys = list(inform_slot_to_fill.keys())
 
-        key = list(inform_slot_to_fill.keys())[0]
 
         # This removes the inform we want to fill from the current informs if it is present in the current informs
         # so it can be re-queried
         current_informs = copy.deepcopy(current_inform_slots)
-        current_informs.pop(key, None)
+        for key in keys:
+            current_informs.pop(key, None)
 
         # db_results is a dict of dict in the same exact format as the db, it is just a subset of the db
         db_results = self.get_db_results(current_informs)
         filled_inform = {}
         if len(db_results) == 0:
-            filled_inform[key] = 'no match available'
+            for key in keys:
+                filled_inform[key] = 'no match available'
         else:
-            highest_score = db_results[list(db_results.keys())[0]]['_score']
             i = 0
-            value = None
-            while i < len(db_results) and not value and db_results[list(db_results.keys())[i]]['_score'] >= highest_score * SCORE_RATE:
-                value = db_results[list(db_results.keys())[i]]['_source'].get(key)
-                i =+ 1
+            value = {}
+            highest_score = db_results[0]['_score']
+            while i < len(db_results) and len(value) == 0 and db_results[i] >= FILL_INFORM_SCORE_RATE * highest_score:
+                val = db_results[list(db_results.keys())[
+                    i]]['_source'].get(key)
+                for key in keys:
+                    if val:
+                        value[key] = val
 
-            if not value:
+                i = + 1
+
+            if len(value):
                 value = 'no match available'
 
-            if not isinstance(value, str):
-                filled_inform[key] = max(value, key=len)
-            else:
-                filled_inform[key] = value
+            for key in keys:
+                if not isinstance(value, str):
+                    filled_inform[key] = max(value, key=len)
+                else:
+                    filled_inform[key] = value
+
         # filled_inform = {}
         # values_dict = self._count_slot_values(key, db_results)
         # if len(db_results) > 1:
@@ -136,11 +146,15 @@ class Querier:
         query = query_builder.QueryBuilder()
         for k, v in new_constraints.items():
             # self.query_builder.add('must', 'match', k, v.replace('_', ' '))
-            query.add('must', 'match', k, v.replace('_', ' '))
+            if k in ['time:start', 'time:end', 'register:time:start', 'register:time:end', 'benefit:ctxh', 'benefit:drl']:
+                query.add('must', 'range', k, v)
+            else:
+                query.add('must', 'match', k, v.replace('_', ' '))
 
         # activities = Querier.searcher.search(self.query_builder.get_query())
         activities = Querier.searcher.search(query.get_query())
-        for item in activities:
+        filtered_activities = Querier.a_filter.filter_by_score(activities)
+        for item in filtered_activities:
             self.cached_db[inform_items].update(
                 {item['_id']: item})
             available_options.update(
@@ -213,16 +227,26 @@ class Querier:
                     len(Querier.searcher.search(query.get_query())))
             else:
                 local_query = query_builder.QueryBuilder()
-                local_query.add(
-                    'must', 'match', CI_key, CI_value.replace('_', ' '))
-                query.add(
-                    'must', 'match', CI_key, CI_value.replace('_', ' '))
-                db_results[CI_key] = int(
-                    len(Querier.searcher.search(local_query.get_query())))
+                if CI_key in ['time:start', 'time:end', 'register:time:start', 'register:time:end', 'benefit:ctxh', 'benefit:drl']:
+                    local_query.add(
+                        'must', 'range', CI_key, CI_value)
+                    query.add(
+                        'must', 'range', CI_key, CI_value)
+                else:
+                    local_query.add(
+                        'must', 'match', CI_key, CI_value.replace('_', ' '))
+                    query.add(
+                        'must', 'match', CI_key, CI_value.replace('_', ' '))
+
+                activities = Querier.searcher.search(local_query.get_query())
+                filtered_activities = Querier.a_filter.filter_by_score(
+                    activities)
+                db_results[CI_key] = int(len(filtered_activities))
 
         # Get all documents match all constraints
-        db_results['matching_all_constraints'] = int(
-            len(Querier.searcher.search(query.get_query())))
+        activities = Querier.searcher.search(query.get_query())
+        filtered_activities = Querier.a_filter.filter_by_score(activities)
+        db_results['matching_all_constraints'] = len(filtered_activities)
 
         # for id in self.database.keys():
         #     all_slots_match = True
@@ -253,3 +277,10 @@ class Querier:
         self.cached_db_slot[inform_items].update(db_results)
         assert self.cached_db_slot[inform_items] == db_results
         return db_results
+
+    def get_all_activities(self):
+        activities = self.get_db_results()
+        if len(activities) > 10:
+            activities = activities[0:10]
+
+        return activities
