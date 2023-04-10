@@ -1,9 +1,15 @@
 from flask import Flask
 from app.api import crawler_data_api, chat_bot_api
 
-app = Flask(__name__, template_folder="templates")
 
-app.register_blueprint(crawler_data_api.crawler_routes)
-app.register_blueprint(chat_bot_api.chatbot_routes)
+# app = Flask(__name__, template_folder="templates")
 
-app.run()
+# app.register_blueprint(crawler_data_api.crawler_routes)
+# app.register_blueprint(chat_bot_api.chatbot_routes)
+
+# app.run()
+
+from benchmark_tool.querier.querier import *
+
+benchmark = QueryBenchmark()
+benchmark.run_benchmark(5, keep_activity=True)

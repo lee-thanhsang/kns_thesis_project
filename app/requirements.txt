@@ -9,6 +9,7 @@ elastic-transport==8.4.0
 elasticsearch==8.6.2
 filelock==3.10.6
 Flask==2.2.3
+fuzzywuzzy==0.18.0
 google==3.0.0
 grpcio==1.51.3
 huggingface-hub==0.13.3
