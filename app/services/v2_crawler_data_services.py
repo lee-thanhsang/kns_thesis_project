@@ -2,9 +2,9 @@ from facebook_scraper import get_posts
 from datetime import datetime
 
 from typing import List, Dict
-from app.models import *
-import app.models as models 
-import app.config as config
+from models import *
+import models as models 
+import config as config
 
 
 class V2CrawlDataService:

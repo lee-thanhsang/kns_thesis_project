@@ -1,7 +1,7 @@
 from flask import Blueprint
 from flask import Flask, request, render_template, redirect, make_response
-from app.server import *
-from app.utils.cookie.cookie_generator import *
+from server import *
+from utils.cookie.cookie_generator import *
 
 chatbot_routes = Blueprint("chatbot_routes", __name__)
 

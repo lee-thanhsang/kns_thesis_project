@@ -1,11 +1,14 @@
 # import pattern_responce_sentence as pattern_responce_sentence
-import app.services.pattern_responce_sentence as pattern_responce_sentence
+import services.pattern_responce_sentence as pattern_responce_sentence
 import random
-from app.utils.state_tracker.state_tracker import StateTracker
-from app.utils.state_tracker.intent_slot_state import *
-from app.utils.cookie.cookie_generator import *
+from utils.state_tracker.state_tracker import StateTracker
+from utils.state_tracker.intent_slot_state import *
+from utils.cookie.cookie_generator import *
+from utils.parser.parser import *
 import pickle
 
+
+SLOT_SEPARATOR = ', '
 
 class V2ResponseSentenceService:
     def __init__(
@@ -18,12 +21,14 @@ class V2ResponseSentenceService:
         self.__action_decider_svc_cli = action_decider_svc_cli
         self.__redis = redis
         self.__slot_intent_state_context = IntentSlotStateContext()
+        self.__time_parser = TimeParser()
+        self.__benefit_parser = BenefitParser()
 
     def get_intent_and_slot_from_sentence(self, message, user_id):
         state_tracker = StateTracker()
         if user_id:
-            state_tracker_str = self.__redis.get_value_from_key(user_id + ':state_tracker')
-            db_helper_str = self.__redis.get_value_from_key(user_id + ':db_helper')
+            state_tracker_str = self.__redis.get_value_from_key('states:' + user_id + ':state_tracker')
+            db_helper_str = self.__redis.get_value_from_key('states:' + user_id + ':db_helper')
             if state_tracker_str and db_helper_str:
                 state_tracker = pickle.loads(state_tracker_str)
                 db_helper = pickle.loads(db_helper_str)
@@ -34,15 +39,10 @@ class V2ResponseSentenceService:
             user_id = generate_cookie()
         
         intent, slot = self.__intent_slot_svc_cli.get_intent_and_slot(message)
-        print(intent, slot)
-
-        # If intent is greeting or complete, just return responce
-        if intent in ['greeting', 'complete']:
-            return {'intent': intent, 'request_slots': {}, 'inform_slots': {}}, user_id
-        
-        inform_slots = slot
+        reformed_slot = self.reform_slot_value(slot)
+        inform_slots = reformed_slot
         request_slots = {}
-        if intent not in ['inform', 'greeting', 'complete', 'meaningless']:
+        if intent not in ['inform', 'greeting', 'complete', 'meaningless', 'activities']:
             request_slots = {intent: 'UNK'}
             intent = 'request'
 
@@ -50,8 +50,25 @@ class V2ResponseSentenceService:
             'user', intent, request_slots, inform_slots)
         state_tracker = self.__slot_intent_state_context.update_state_tracker(
             state_tracker)
+        
+        # If intent is greeting or complete, just return responce
+        if intent in ['greeting', 'complete']:
+            self.cache_current_state(user_id, state_tracker)
+            return {'intent': intent, 'request_slots': {}, 'inform_slots': {}}, user_id
+        
+        if intent in ['activities']:
+            activities = state_tracker.get_activities()
+            state_tracker.reset()
+            return activities, user_id
+        
+        # [FUTURE_FIX] Handle with intent is 'activities'.
 
         state = state_tracker.get_state()
+        if state is None:
+            state_tracker.reset()
+            self.cache_current_state(user_id, state_tracker)
+            return {'intent': 'no_document', 'request_slots': {}, 'inform_slots': {}}, user_id
+
         action = self.__action_decider_svc_cli.get_action(state)
         print(vars(state_tracker))
 
@@ -62,6 +79,10 @@ class V2ResponseSentenceService:
             'agent', intent, request_slots, inform_slots)
         state_tracker = self.__slot_intent_state_context.update_state_tracker(
             state_tracker)
+
+        if intent in ['done', 'thank']:
+            self.cache_current_state(user_id, state_tracker)
+            return {'intent': intent, 'request_slots': {}, 'inform_slots': {}}, user_id
 
         answer = state_tracker.get_answer()
         if answer:
@@ -76,9 +97,7 @@ class V2ResponseSentenceService:
         if question:
             print('question ', question)
 
-        self.__redis.set_key_value(user_id + ':db_helper', pickle.dumps(state_tracker.db_helper))
-        delattr(state_tracker, 'db_helper')
-        self.__redis.set_key_value(user_id + ':state_tracker', pickle.dumps(state_tracker))
+        self.cache_current_state(user_id, state_tracker)
         return answer if answer else question, user_id
 
     def make_response_sentence(self, data):
@@ -107,6 +126,54 @@ class V2ResponseSentenceService:
         elif raw_intent == 'greeting':
             sentence = self.get_pattern_responce_sentence('greeting')
             return sentence
+        
+        #[FUTURE_FIX] Add pattern and replace this case.
+        elif raw_intent == 'no_document':
+            return 'Không tìm thấy hoạt động trên yêu cầu của bạn'
+        
+        #[FUTURE_FIX] Add pattern for responsing all activities.
+        elif raw_intent == 'activities':
+            return 'Danh sach cac hoat dong'
 
     def get_pattern_responce_sentence(self, intent):
         return random.sample(getattr(pattern_responce_sentence, intent), 1)[0]
+
+    def cache_current_state(self, user_id, state_tracker):
+        self.__redis.set_key_value('states:' + user_id + ':db_helper', pickle.dumps(state_tracker.db_helper))
+        delattr(state_tracker, 'db_helper')
+        self.__redis.set_key_value('states:' + user_id + ':state_tracker', pickle.dumps(state_tracker))
+
+    def reform_slot_value(self, slot):
+        reformed_slot = {}
+        for key in slot.keys():
+            if key in ['time:start', 'time:end', 'register:time:start', 'register:time:end']:
+                sub_slots = slot[key].split(SLOT_SEPARATOR)
+                time_ranges = []
+                for sub_slot in sub_slots:
+                    time_range = self.__time_parser.parse(sub_slot)
+                    if time_range is not None:
+                        time_ranges.append(time_range)
+
+                if len(time_ranges) == 1:
+                    reformed_slot[key] = [self.__time_parser.to_string(time_ranges[0][0]), self.__time_parser.to_string(time_ranges[0][1])]
+                elif len(time_ranges) > 1:
+                    time_ranges = sorted(time_ranges)
+                    reformed_slot[key] = [self.__time_parser.to_string(time_ranges[0][0]), self.__time_parser.to_string(time_ranges[-1][0])]
+
+            elif key in ['benefit:drl', 'benefit:ctxh']:
+                sub_slots = slot[key].split(SLOT_SEPARATOR)
+                benefits = []
+                for sub_slot in sub_slots:
+                    sub_slot_benefits = self.__benefit_parser.parse(sub_slot)
+                    for item in sub_slot_benefits:
+                        benefits.append(item)
+
+                if len(benefits) == 1:
+                    reformed_slot[key] = [benefits[0]]
+                elif len(benefits) > 1:
+                    reformed_slot[key] = [min(benefits), max(benefits)]
+
+            else:
+                reformed_slot[key] = slot[key]
+
+        return reformed_slot

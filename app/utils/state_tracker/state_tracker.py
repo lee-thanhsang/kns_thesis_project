@@ -1,4 +1,4 @@
-from app.utils.querier import querier
+from utils.querier import querier
 import copy
 import numpy
 
@@ -30,6 +30,7 @@ class StateTracker:
         self.cur_action = {}
         self.answer = {}
         self.history = []
+        self.last_agent_request = None
         self.reset()
 
     def get_state_size(self):
@@ -78,8 +79,12 @@ class StateTracker:
         if done:
             return self.none_state
 
+        self.round_num += 1
         user_action = self.history[-1]
         db_results_dict = self.db_helper.get_db_results_for_slots(self.current_informs)
+        if len(db_results_dict['matching_all_constraints']) == 0:
+            return None
+
         last_agent_action = self.history[-2] if len(self.history) > 1 else None
 
         # Create one-hot of intents to represent the current user action
@@ -99,7 +104,9 @@ class StateTracker:
         # Create bag of request slots representation to represent the current user action
         user_request_slots_rep = numpy.zeros((self.num_slots,))
         for key in user_action['request_slots'].keys():
-            user_request_slots_rep[self.slots_dict[key]] = 1.0
+            sub_keys = get_sub_keys(key)
+            for sub_key in sub_keys:
+                user_request_slots_rep[self.slots_dict[sub_key]] = 1.0
 
         # Create bag of filled_in slots based on the current_slots
         current_slots_rep = numpy.zeros((self.num_slots,))
@@ -121,7 +128,9 @@ class StateTracker:
         agent_request_slots_rep = numpy.zeros((self.num_slots,))
         if last_agent_action:
             for key in last_agent_action['request_slots'].keys():
-                agent_request_slots_rep[self.slots_dict[key]] = 1.0
+                sub_keys = get_sub_keys(key)
+                for sub_key in sub_keys:
+                    user_request_slots_rep[self.slots_dict[sub_key]] = 1.0
 
         # Value representation of the round num
         turn_rep = numpy.zeros((1,)) + self.round_num
@@ -170,23 +179,30 @@ class StateTracker:
             inform_slots = self.db_helper.fill_inform_slot(agent_action['inform_slots'], self.current_informs)
             agent_action['inform_slots'] = inform_slots
             assert agent_action['inform_slots']
-            key, value = list(agent_action['inform_slots'].items())[0]  # Only one
-            assert key != 'match_found'
-            assert value != 'PLACEHOLDER', 'KEY: {}'.format(key)
-            if value != 'not match available':
-                self.current_informs[key] = value
+            items = list(agent_action['inform_slots'].items())
+            for item in items:
+                key = item[0]
+                value = item[1]
+                assert key != 'match_found'
+                assert value != 'PLACEHOLDER', 'KEY: {}'.format(key)
+                if value != 'not match available':
+                    self.current_informs[key] = value
         # If intent is match_found then fill the action informs with the matches informs (if there is a match)
         elif agent_action['intent'] == 'match_found':
             assert not agent_action['inform_slots'], 'Cannot inform and have intent of match found!'
             db_results = self.db_helper.get_db_results(self.current_informs)
             if db_results:
                 # Arbitrarily pick the first value of the dict
-                key, value = list(db_results.items())[0]
+                items = list(db_results.items())[0]
                 agent_action['inform_slots'] = copy.deepcopy(value)
                 # agent_action['inform_slots'][self.match_key] = str(key)
             # else:
                 # agent_action['inform_slots'][self.match_key] = 'no match available'
             # self.current_informs[self.match_key] = agent_action['inform_slots'][self.match_key]
+        
+        elif agent_action['intent'] == 'request':
+            self.set_last_agent_request(list(agent_action['request_slots'])[0])
+
         agent_action.update({'round': self.round_num, 'speaker': 'Agent'})
         self.history.append(agent_action)
         self.set_cur_action(agent_action)
@@ -208,7 +224,7 @@ class StateTracker:
             self.current_informs[key] = value
         user_action.update({'round': self.round_num, 'speaker': 'User'})
         self.history.append(user_action)
-        self.round_num += 1
+        # self.round_num += 1
         self.set_cur_action(user_action)
 
     def add_user_requests(self, request):
@@ -245,7 +261,30 @@ class StateTracker:
     def reset_current_informs(self):
         self.current_informs = {}
 
+    def set_last_agent_request(self, request):
+        self.last_agent_request = request
+
+    def reset_last_agent_request(self):
+        self.last_agent_request = None
+
+    def get_activities(self):
+        return self.db_helper.get_all_activities()
+
+
 def convert_list_to_dict(lst):
     if len(lst) > len(set(lst)):
         raise ValueError('List must be unique!')
     return {k: v for v, k in enumerate(lst)}
+
+def get_sub_keys(key):
+    sub_keys = []
+    if key == 'time':
+        sub_keys = ['time:start', 'time:end']
+    elif key == 'register:time':
+        sub_keys = ['register:time:start', 'register:time:end']
+    elif key == 'benefit':
+        sub_keys = ['benefit:drl', 'benefit:ctxh', 'benefit:others']
+    else:
+        sub_keys = [key]
+
+    return sub_keys
