@@ -1,6 +1,8 @@
 from utils.querier import querier
 import copy
 import numpy
+import math
+
 
 no_query_keys = ['number', 'register:way', 'job_description']
 
@@ -36,7 +38,7 @@ class StateTracker:
     def get_state_size(self):
         """Returns the state size of the state representation used by the agent."""
 
-        return 2 * self.num_intents + 7 * self.num_slots + 3 + self.max_round_num
+        return 2 * self.num_intents + 8 * self.num_slots + 4 + self.max_round_num
 
     def reset(self):
         """Resets current_informs, history, round_num and user_requests"""
@@ -81,7 +83,10 @@ class StateTracker:
 
         user_action = self.history[-1]
         db_results_dict = self.db_helper.get_db_results_for_slots(self.current_informs)
-        if db_results_dict['matching_all_constraints'] == 0:
+        filtered_db_results_dict = self.db_helper.get_db_results_for_slots(self.current_informs, is_filter=True)
+        print('DB ', db_results_dict)
+        print('DB Filter', filtered_db_results_dict)
+        if filtered_db_results_dict['matching_all_constraints'] == 0:
             return None
 
         last_agent_action = self.history[-2] if len(self.history) > 1 else None
@@ -145,8 +150,15 @@ class StateTracker:
         kb_count_rep = numpy.zeros((self.num_slots + 1,))
         for key in db_results_dict.keys():
             if key in self.slots_dict:
-                kb_count_rep[self.slots_dict[key]] = db_results_dict[key]/5.0 if db_results_dict[key] <=10 else 10
-        kb_count_rep[-1] = db_results_dict['matching_all_constraints']/5.0 if db_results_dict['matching_all_constraints'] <=10 else 10
+                kb_count_rep[self.slots_dict[key]] = self.normalize_number_query_doc(db_results_dict[key])
+        kb_count_rep[-1] = self.normalize_number_query_doc(db_results_dict['matching_all_constraints'])
+
+        # Representation of DB query results (after filtering by score).
+        kb_count_rep_filtered = numpy.zeros((self.num_slots + 1,))
+        for key in filtered_db_results_dict.keys():
+            if key in self.slots_dict:
+                kb_count_rep_filtered[self.slots_dict[key]] = self.normalize_number_query_doc(filtered_db_results_dict[key])
+        kb_count_rep_filtered[-1] = self.normalize_number_query_doc(filtered_db_results_dict['matching_all_constraints'])
 
         # Representation of DB query results (binary)
         kb_binary_rep = numpy.zeros((self.num_slots + 1,))
@@ -157,9 +169,10 @@ class StateTracker:
         
         state_representation = numpy.hstack(
             [user_act_rep, user_inform_slots_rep, user_request_slots_rep, agent_act_rep, agent_inform_slots_rep,
-             agent_request_slots_rep, current_slots_rep, turn_rep, turn_onehot_rep, kb_count_rep, kb_binary_rep]).flatten()
+             agent_request_slots_rep, current_slots_rep, turn_rep, turn_onehot_rep, kb_count_rep, kb_count_rep_filtered, kb_binary_rep]).flatten()
         
         # print(state_representation)
+        print('LENGTH ', len(state_representation))
 
         return state_representation
 
@@ -272,7 +285,10 @@ class StateTracker:
         self.last_agent_request = None
 
     def get_activities(self):
-        return self.db_helper.get_all_activities()
+        return self.db_helper.get_all_activities(self.current_informs)
+    
+    def normalize_number_query_doc(self, num_of_docs):
+        return (1./(1. + math.exp(-(num_of_docs-5)/1.8)))
 
 
 def convert_list_to_dict(lst):
