@@ -45,10 +45,19 @@ class V2ResponseSentenceService:
         inform_slots = reformed_slot
         request_slots = {}
         if intent not in ['inform', 'greeting', 'complete', 'meaningless', 'activities']:
+            if intent == 'jobdescription':
+                intent = 'job_description'
+
+            if intent == 'registerway':
+                intent = 'register:way'
+            
+            if intent == 'registerdate':
+                intent = 'register:time'
+
             request_slots = {intent: 'UNK'}
             intent = 'request'
 
-        print(intent, inform_slots)
+        print('INTENT AND SLOT: ', intent, request_slots, slot, inform_slots)
 
         self.__slot_intent_state_context.set_state_object(
             'user', intent, request_slots, inform_slots)
@@ -56,7 +65,7 @@ class V2ResponseSentenceService:
             state_tracker)
         
         # If intent is greeting or complete, just return responce
-        if intent in ['greeting', 'complete']:
+        if intent in ['greeting', 'complete', 'meaningless']:
             self.cache_current_state(user_id, state_tracker)
             return {'intent': intent, 'request_slots': {}, 'inform_slots': {}}, user_id
         
@@ -65,13 +74,21 @@ class V2ResponseSentenceService:
             state_tracker.reset()
             return activities, user_id
         
-        # [FUTURE_FIX] Handle with intent is 'activities'.
-
+        # [FUTURE_FIX] Handle case inform without request.
+        if not state_tracker.get_first_user_request():
+            self.cache_current_state(user_id, state_tracker)
+            return 'Bọn mình đã lưu thông tin hoạt động. Bạn muốn hỏi điều gì về hoạt động', user_id
+        
         state = state_tracker.get_state()
         if state is None:
             state_tracker.reset()
             self.cache_current_state(user_id, state_tracker)
             return {'intent': 'no_document', 'request_slots': {}, 'inform_slots': {}}, user_id
+        
+        if state_tracker.round_num > state_tracker.max_round_num:
+            state_tracker.reset()
+            self.cache_current_state(user_id, state_tracker)
+            return 'Vượt quá số lần hỏi về hoạt động', user_id
 
         action = self.__action_decider_svc_cli.get_action(state)
         print(action)
@@ -96,8 +113,8 @@ class V2ResponseSentenceService:
             state_tracker.reset_answer()
             state_tracker.remove_user_requests(
                 list(state_tracker.get_first_user_request().keys())[0])
-            if state_tracker.get_first_user_request() is None:
-                state_tracker.reset()
+            # if state_tracker.get_first_user_request() is None:
+            #     state_tracker.reset()
 
         question = state_tracker.get_cur_action()
         if question:
@@ -108,7 +125,7 @@ class V2ResponseSentenceService:
 
     def make_response_sentence(self, data):
         if isinstance(data, str):
-            return 'Không xử lý được tình huống này'
+            return data
         
         raw_intent = data.get('intent', False)
         
@@ -180,6 +197,9 @@ class V2ResponseSentenceService:
                     reformed_slot[key] = [benefits[0]]
                 elif len(benefits) > 1:
                     reformed_slot[key] = [min(benefits), max(benefits)]
+
+            elif key in ['jobdescription']:
+                reformed_slot['job_description'] = slot[key]
 
             else:
                 reformed_slot[key] = slot[key]
