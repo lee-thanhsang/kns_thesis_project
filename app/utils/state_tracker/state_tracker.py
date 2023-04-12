@@ -41,7 +41,7 @@ class StateTracker:
     def reset(self):
         """Resets current_informs, history, round_num and user_requests"""
 
-        # self.current_informs = {}
+        self.current_informs = {}
         # A list of the dialogues (dicts) by the agent and user so far in the conversation
         # self.history = []
         self.round_num = 0
@@ -79,13 +79,15 @@ class StateTracker:
         if done:
             return self.none_state
 
-        self.round_num += 1
         user_action = self.history[-1]
         db_results_dict = self.db_helper.get_db_results_for_slots(self.current_informs)
-        if len(db_results_dict['matching_all_constraints']) == 0:
+        if db_results_dict['matching_all_constraints'] == 0:
             return None
 
         last_agent_action = self.history[-2] if len(self.history) > 1 else None
+        if last_agent_action and 'intent' in last_agent_action.keys():
+            if last_agent_action['intent'] in ['greeting', 'complete', 'activities']:
+                last_agent_action['intent'] = 'done'
 
         # Create one-hot of intents to represent the current user action
         user_act_rep = numpy.zeros((self.num_intents,))
@@ -224,7 +226,7 @@ class StateTracker:
             self.current_informs[key] = value
         user_action.update({'round': self.round_num, 'speaker': 'User'})
         self.history.append(user_action)
-        # self.round_num += 1
+        self.round_num += 1
         self.set_cur_action(user_action)
 
     def add_user_requests(self, request):
@@ -249,8 +251,10 @@ class StateTracker:
     def get_cur_action(self):
         return self.cur_action
     
-    def set_answer(self):
+    def set_answer(self, text = None):
         self.answer = self.cur_action
+        if text is not None:
+            self.answer = text
 
     def get_answer(self):
         return self.answer

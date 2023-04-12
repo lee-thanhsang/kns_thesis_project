@@ -16,15 +16,17 @@ async function output(userMessage) {
     let formData = new FormData();
     formData.append('sentence', userMessage);
 
-    result = await fetch('http://127.0.0.1:5000/v2/get-response-sentence', {
+    result = await fetch('/v2/get-response-sentence', {
             method: 'POST',
-            body: formData,
+            body: formData
     }).then((response) => {
         if (!response.ok) {
             throw new Error(response.error)
         }
         return response.json();
     });
+
+    console.log(result)
 
     addBotEntry(botText, result['sentence']);
 }
