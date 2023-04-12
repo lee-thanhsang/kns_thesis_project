@@ -52,7 +52,7 @@ class Querier:
         filled_inform = {}
         if len(db_results) == 0:
             for key in keys:
-                filled_inform[key] = 'no match available'
+                filled_inform[key] = 'not match available'
         else:
             i = 0
             value_map = {}
@@ -63,11 +63,11 @@ class Querier:
                     if val:
                         value_map[key] = val
 
-                i = + 1
+                i = i + 1
 
             if len(value_map) == 0:
                 for key in keys:
-                    filled_inform[key] = 'no match available'
+                    filled_inform[key] = 'not match available'
             else:
                 for key in keys:
                     if key in value_map.keys():
@@ -126,7 +126,7 @@ class Querier:
         """
         # Filter non-queryable items and keys with the value 'anything' since those are inconsequential to the constraints
         new_constraints = {k: v for k, v in constraints.items(
-        ) if k not in self.no_query and v != 'anything' and v != 'no match available'}
+        ) if k not in self.no_query and v != 'anything' and v != 'not match available'}
 
         # inform_items = frozenset(new_constraints.items())
         # print('Constraints Search')
@@ -252,6 +252,7 @@ class Querier:
                         CI_value = Querier.time_parser.parse(CI_value)
 
                     if CI_value and len(CI_value) == 2:
+                        print('CI ', CI_value)
                         if not isinstance(CI_value[0], str):
                             CI_value[0] = Querier.time_parser.to_string(CI_value[0])
 

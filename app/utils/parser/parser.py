@@ -9,6 +9,9 @@ class TimeParser:
             return
         
         dmy_parts = time_parts[-1].split('/')
+        if len(dmy_parts) == 1:
+            dmy_parts = time_parts[-1].split('-')
+
         dmy_parts.reverse()
         hms_parts = []
         if len(time_parts) > 1:
@@ -43,7 +46,7 @@ class TimeParser:
                 hours=next_time_list[3], minutes=next_time_list[4], seconds=next_time_list[5]
             )
 
-            return (cur_time, next_time)
+            return [cur_time, next_time]
 
         except:
             return None

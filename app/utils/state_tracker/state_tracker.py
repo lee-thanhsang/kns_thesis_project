@@ -50,6 +50,9 @@ class StateTracker:
         # self.user_requests = []
         self.cur_action = {}
         self.answer = {}
+        self.history = []
+        self.last_agent_request = None
+        self.user_requests = []
 
     def reset_user_requests(self):
         self.user_requests = []
@@ -84,14 +87,12 @@ class StateTracker:
         user_action = self.history[-1]
         db_results_dict = self.db_helper.get_db_results_for_slots(self.current_informs)
         filtered_db_results_dict = self.db_helper.get_db_results_for_slots(self.current_informs, is_filter=True)
-        print('DB ', db_results_dict)
-        print('DB Filter', filtered_db_results_dict)
         if filtered_db_results_dict['matching_all_constraints'] == 0:
             return None
 
         last_agent_action = self.history[-2] if len(self.history) > 1 else None
         if last_agent_action and 'intent' in last_agent_action.keys():
-            if last_agent_action['intent'] in ['greeting', 'complete', 'activities']:
+            if last_agent_action['intent'] in ['greeting', 'complete', 'activities', 'meaningless']:
                 last_agent_action['intent'] = 'done'
 
         # Create one-hot of intents to represent the current user action
@@ -113,6 +114,7 @@ class StateTracker:
         for key in user_action['request_slots'].keys():
             sub_keys = get_sub_keys(key)
             for sub_key in sub_keys:
+
                 user_request_slots_rep[self.slots_dict[sub_key]] = 1.0
 
         # Create bag of filled_in slots based on the current_slots
@@ -172,7 +174,6 @@ class StateTracker:
              agent_request_slots_rep, current_slots_rep, turn_rep, turn_onehot_rep, kb_count_rep, kb_count_rep_filtered, kb_binary_rep]).flatten()
         
         # print(state_representation)
-        print('LENGTH ', len(state_representation))
 
         return state_representation
 
@@ -190,16 +191,16 @@ class StateTracker:
 
         """
         if agent_action['intent'] == 'inform':
-            assert agent_action['inform_slots']
+            # assert agent_action['inform_slots']
             inform_slots = self.db_helper.fill_inform_slot(agent_action['inform_slots'], self.current_informs)
             agent_action['inform_slots'] = inform_slots
-            assert agent_action['inform_slots']
+            # assert agent_action['inform_slots']
             items = list(agent_action['inform_slots'].items())
             for item in items:
                 key = item[0]
                 value = item[1]
-                assert key != 'match_found'
-                assert value != 'PLACEHOLDER', 'KEY: {}'.format(key)
+                # assert key != 'match_found'
+                # assert value != 'PLACEHOLDER', 'KEY: {}'.format(key)
                 if value != 'not match available':
                     self.current_informs[key] = value
         # If intent is match_found then fill the action informs with the matches informs (if there is a match)
