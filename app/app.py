@@ -1,15 +1,16 @@
 from flask import Flask
 from api import crawler_data_api, chat_bot_api
+from flask_cors import CORS
 
+app = Flask(__name__, template_folder="templates")
+# CORS(app, supports_credentials=True)
 
-# app = Flask(__name__, template_folder="templates")
+app.register_blueprint(crawler_data_api.crawler_routes)
+app.register_blueprint(chat_bot_api.chatbot_routes)
 
-# register_blueprint(crawler_data_api.crawler_routes)
-# register_blueprint(chat_bot_api.chatbot_routes)
+app.run()
 
-# run()
+# from benchmark_tool.querier.querier import *
 
-from benchmark_tool.querier.querier import *
-
-benchmark = QueryBenchmark()
-benchmark.run_benchmark(5, keep_activity=True)
+# benchmark = QueryBenchmark()
+# benchmark.run_benchmark(5, keep_activity=True)

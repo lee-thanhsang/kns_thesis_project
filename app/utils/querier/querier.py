@@ -3,6 +3,7 @@ import copy
 import utils.querier.searcher as searcher
 import utils.querier.query_builder as query_builder
 import utils.filter.filter as activity_filter
+import utils.parser.parser as parser
 
 
 no_query_keys = ['number', 'register:way', 'job_description']
@@ -13,6 +14,7 @@ FILL_INFORM_SCORE_RATE = 0.8
 class Querier:
     searcher = searcher.Searcher()
     a_filter = activity_filter.ActivityFilter()
+    time_parser = parser.TimeParser()
 
     def __init__(self):
         self.cached_db_slot = defaultdict(dict)
@@ -39,7 +41,6 @@ class Querier:
         # For this simple system only one inform slot should ever passed in
         keys = list(inform_slot_to_fill.keys())
 
-
         # This removes the inform we want to fill from the current informs if it is present in the current informs
         # so it can be re-queried
         current_informs = copy.deepcopy(current_inform_slots)
@@ -54,25 +55,26 @@ class Querier:
                 filled_inform[key] = 'no match available'
         else:
             i = 0
-            value = {}
-            highest_score = db_results[0]['_score']
-            while i < len(db_results) and len(value) == 0 and db_results[i] >= FILL_INFORM_SCORE_RATE * highest_score:
-                val = db_results[list(db_results.keys())[
-                    i]]['_source'].get(key)
+            value_map = {}
+            highest_score = db_results[list(db_results.keys())[0]]['_score']
+            while i < len(db_results) and len(value_map) == 0 and db_results[list(db_results.keys())[i]]['_score'] >= FILL_INFORM_SCORE_RATE * highest_score:
                 for key in keys:
+                    val = db_results[list(db_results.keys())[i]]['_source'].get(key)
                     if val:
-                        value[key] = val
+                        value_map[key] = val
 
                 i = + 1
 
-            if len(value):
-                value = 'no match available'
-
-            for key in keys:
-                if not isinstance(value, str):
-                    filled_inform[key] = max(value, key=len)
-                else:
-                    filled_inform[key] = value
+            if len(value_map) == 0:
+                for key in keys:
+                    filled_inform[key] = 'no match available'
+            else:
+                for key in keys:
+                    if key in value_map.keys():
+                        if not isinstance(value_map[key], str) and not isinstance(value_map[key], float):
+                            filled_inform[key] = max(value_map[key], key=len)
+                        else:
+                            filled_inform[key] = value_map[key]
 
         # filled_inform = {}
         # values_dict = self._count_slot_values(key, db_results)
@@ -126,18 +128,18 @@ class Querier:
         new_constraints = {k: v for k, v in constraints.items(
         ) if k not in self.no_query and v != 'anything' and v != 'no match available'}
 
-        inform_items = frozenset(new_constraints.items())
+        # inform_items = frozenset(new_constraints.items())
         # print('Constraints Search')
         # print(inform_items)
         # print(self.cached_db)
-        cache_return = self.cached_db[inform_items]
+        # cache_return = self.cached_db[inform_items]
 
-        if cache_return == None:
+        # if cache_return == None:
             # If it is none then no matches fit with the constraints so return an empty dict
-            return {}
+            # return {}
         # if it isnt empty then return what it is
-        if cache_return:
-            return cache_return
+        # if cache_return:
+        #     return cache_return
         # else continue on
         # print('constraints search')
         # print(new_constraints)
@@ -146,8 +148,19 @@ class Querier:
         query = query_builder.QueryBuilder()
         for k, v in new_constraints.items():
             # self.query_builder.add('must', 'match', k, v.replace('_', ' '))
-            if k in ['time:start', 'time:end', 'register:time:start', 'register:time:end', 'benefit:ctxh', 'benefit:drl']:
-                query.add('must', 'range', k, v)
+            if k in ['time:start', 'time:end', 'register:time:start', 'register:time:end']:
+                if isinstance(v, str):
+                    v = Querier.time_parser.parse(v)
+
+                if v and len(v) == 2:
+                    query.add('must', 'range', k, [Querier.time_parser.to_string(v[0]), Querier.time_parser.to_string(v[1])])
+            elif k in ['benefit:ctxh', 'benefit:drl']:
+                if isinstance(v, str):
+                    if v.replace('.', '', 1).isdigit():
+                        v = [float(v)]
+
+                if len(v) >= 1:
+                    query.add('must', 'range', k, v)
             else:
                 query.add('must', 'match', k, v.replace('_', ' '))
 
@@ -155,8 +168,8 @@ class Querier:
         activities = Querier.searcher.search(query.get_query())
         filtered_activities = Querier.a_filter.filter_by_score(activities)
         for item in filtered_activities:
-            self.cached_db[inform_items].update(
-                {item['_id']: item})
+            # self.cached_db[inform_items].update(
+            #     {item['_id']: item})
             available_options.update(
                 {item['_id']: item})
         #     print(activity_map[item['_id']])
@@ -182,8 +195,8 @@ class Querier:
         #             available_options.update({id: current_option_dict})
 
         # if nothing available then set the set of constraint items to none in cache
-        if not available_options:
-            self.cached_db[inform_items] = None
+        # if not available_options:
+        #     self.cached_db[inform_items] = None
 
         return available_options
 
@@ -202,12 +215,13 @@ class Querier:
         """
 
         # The items (key, value) of the current informs are used as a key to the cached_db_slot
-        inform_items = frozenset(current_informs.items())
-        # A dict of the inform keys and their counts as stored (or not stored) in the cached_db_slot
-        cache_return = self.cached_db_slot[inform_items]
+        # print(current_informs.items())
+        # inform_items = frozenset(current_informs.items())
+        # # A dict of the inform keys and their counts as stored (or not stored) in the cached_db_slot
+        # cache_return = self.cached_db_slot[inform_items]
 
-        if cache_return:
-            return cache_return
+        # if cache_return:
+        #     return cache_return
 
         # If it made it down here then a new query was made and it must add it to cached_db_slot and return it
         # Init all key values with 0
@@ -227,11 +241,21 @@ class Querier:
                     len(Querier.searcher.search(query.get_query())))
             else:
                 local_query = query_builder.QueryBuilder()
-                if CI_key in ['time:start', 'time:end', 'register:time:start', 'register:time:end', 'benefit:ctxh', 'benefit:drl']:
-                    local_query.add(
-                        'must', 'range', CI_key, CI_value)
-                    query.add(
-                        'must', 'range', CI_key, CI_value)
+                if CI_key in ['time:start', 'time:end', 'register:time:start', 'register:time:end']:
+                    if isinstance(CI_value, str):
+                        CI_value = Querier.time_parser.parse(CI_value)
+
+                    if CI_value and len(CI_value) == 2:
+                        local_query.add('must', 'range', CI_key, [Querier.time_parser.to_string(CI_value[0]), Querier.time_parser.to_string(CI_value[1])])
+                        query.add('must', 'range', CI_key, [Querier.time_parser.to_string(CI_value[0]), Querier.time_parser.to_string(CI_value[1])])
+                elif CI_key in ['benefit:ctxh', 'benefit:drl']:
+                    if isinstance(CI_value, str):
+                        if CI_value.replace('.', '', 1).isdigit():
+                            CI_value = [float(CI_value)]
+
+                    if len(CI_value) >= 1:
+                        local_query.add('must', 'range', CI_key, CI_value)
+                        query.add('must', 'range', CI_key, CI_value)
                 else:
                     local_query.add(
                         'must', 'match', CI_key, CI_value.replace('_', ' '))
@@ -274,12 +298,13 @@ class Querier:
         #     if all_slots_match: db_results['matching_all_constraints'] += 1
 
         # update cache (set the empty dict)
-        self.cached_db_slot[inform_items].update(db_results)
-        assert self.cached_db_slot[inform_items] == db_results
+        # self.cached_db_slot[inform_items].update(db_results)
+        # assert self.cached_db_slot[inform_items] == db_results
         return db_results
 
     def get_all_activities(self):
         activities = self.get_db_results()
+        activities = list(activities.values())
         if len(activities) > 10:
             activities = activities[0:10]
 

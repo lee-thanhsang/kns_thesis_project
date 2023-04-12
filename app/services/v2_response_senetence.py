@@ -38,6 +38,8 @@ class V2ResponseSentenceService:
         else:
             user_id = generate_cookie()
         
+        print(state_tracker.current_informs)
+
         intent, slot = self.__intent_slot_svc_cli.get_intent_and_slot(message)
         reformed_slot = self.reform_slot_value(slot)
         inform_slots = reformed_slot
@@ -45,6 +47,8 @@ class V2ResponseSentenceService:
         if intent not in ['inform', 'greeting', 'complete', 'meaningless', 'activities']:
             request_slots = {intent: 'UNK'}
             intent = 'request'
+
+        print(intent, inform_slots)
 
         self.__slot_intent_state_context.set_state_object(
             'user', intent, request_slots, inform_slots)
@@ -70,7 +74,7 @@ class V2ResponseSentenceService:
             return {'intent': 'no_document', 'request_slots': {}, 'inform_slots': {}}, user_id
 
         action = self.__action_decider_svc_cli.get_action(state)
-        print(vars(state_tracker))
+        print(action)
 
         intent = action['intent']
         request_slots = action['request_slots']
@@ -79,6 +83,8 @@ class V2ResponseSentenceService:
             'agent', intent, request_slots, inform_slots)
         state_tracker = self.__slot_intent_state_context.update_state_tracker(
             state_tracker)
+        
+        print(vars(state_tracker))
 
         if intent in ['done', 'thank']:
             self.cache_current_state(user_id, state_tracker)
@@ -116,7 +122,6 @@ class V2ResponseSentenceService:
                 value = inform_slots[1]
 
             sentence = self.get_pattern_responce_sentence(intent)
-
             return sentence.replace('KEYWORD', value if value else '')
 
         elif raw_intent in ['complete', 'thanks', 'done']:

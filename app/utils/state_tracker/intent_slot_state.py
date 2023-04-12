@@ -88,8 +88,18 @@ class AgentInformState(IntentSlotState):
     def update_state_tracker(self, state_tracker: StateTracker):
         agent_action = self.action
         state_tracker.update_state_agent(agent_action)
-        if list(state_tracker.get_first_user_request().keys())[0] in agent_action['inform_slots']:
-            state_tracker.set_answer()
+        if state_tracker.get_first_user_request():
+            request_slot = list(state_tracker.get_first_user_request().keys())[0]
+            sub_requests = get_sub_keys(request_slot)
+            is_answer = False
+            for sub_request in sub_requests:
+                if sub_request in agent_action['inform_slots']:
+                    is_answer = True
+                    state_tracker.set_answer()
+
+            if not is_answer:
+                state_tracker.set_answer('Wrong decision in model')
+                print('wrong decision')
 
         return state_tracker
 
