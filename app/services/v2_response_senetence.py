@@ -107,6 +107,9 @@ class V2ResponseSentenceService:
         return answer if answer else question, user_id
 
     def make_response_sentence(self, data):
+        if isinstance(data, str):
+            return 'Không xử lý được tình huống này'
+        
         raw_intent = data.get('intent', False)
         
         if raw_intent in ['request', 'inform']:

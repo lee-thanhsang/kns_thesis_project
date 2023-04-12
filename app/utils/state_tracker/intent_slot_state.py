@@ -1,5 +1,7 @@
 from utils.state_tracker.state_tracker import *
+from fuzzywuzzy import fuzz
 
+MIN_FUZZY_SCORE = 0.75
 
 class IntentSlotState:
     def __init__(self, intent, request_slots, inform_slots):
@@ -46,8 +48,8 @@ class UserRequestState(IntentSlotState):
     def update_state_tracker(self, state_tracker: StateTracker):
         user_action = self.action
         if 'name' in state_tracker.current_informs.keys() and 'name' in self.action['inform_slots']:
-            # [FUTURE FIX] use fuzzy to compare name between activities.
-            if self.action['inform_slots']['name'] != state_tracker.current_informs['name']:
+            # [FUTURE_FIX] use fuzzy to compare name between activities.
+            if fuzz.ratio(self.action['inform_slots']['name'], state_tracker.current_informs['name']) < MIN_FUZZY_SCORE:
                 print(self.action['inform_slots']['name'],
                       state_tracker.current_informs['name'])
                 state_tracker.reset_current_informs()
@@ -98,6 +100,7 @@ class AgentInformState(IntentSlotState):
                     state_tracker.set_answer()
 
             if not is_answer:
+                print(request_slot, agent_action['inform_slots'])
                 state_tracker.set_answer('Wrong decision in model')
                 print('wrong decision')
 

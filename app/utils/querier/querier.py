@@ -153,7 +153,13 @@ class Querier:
                     v = Querier.time_parser.parse(v)
 
                 if v and len(v) == 2:
-                    query.add('must', 'range', k, [Querier.time_parser.to_string(v[0]), Querier.time_parser.to_string(v[1])])
+                    if not isinstance(v[0], str):
+                        v[0] = Querier.time_parser.to_string(v[0])
+
+                    if not isinstance(v[1], str):
+                        v[1] = Querier.time_parser.to_string(v[1])
+
+                    query.add('must', 'range', k, [v[0], v[1]])
             elif k in ['benefit:ctxh', 'benefit:drl']:
                 if isinstance(v, str):
                     if v.replace('.', '', 1).isdigit():
@@ -200,7 +206,7 @@ class Querier:
 
         return available_options
 
-    def get_db_results_for_slots(self, current_informs):
+    def get_db_results_for_slots(self, current_informs, is_filter = False):
         """
         Counts occurrences of each current inform slot (key and value) in the database items.
 
@@ -246,8 +252,14 @@ class Querier:
                         CI_value = Querier.time_parser.parse(CI_value)
 
                     if CI_value and len(CI_value) == 2:
-                        local_query.add('must', 'range', CI_key, [Querier.time_parser.to_string(CI_value[0]), Querier.time_parser.to_string(CI_value[1])])
-                        query.add('must', 'range', CI_key, [Querier.time_parser.to_string(CI_value[0]), Querier.time_parser.to_string(CI_value[1])])
+                        if not isinstance(CI_value[0], str):
+                            CI_value[0] = Querier.time_parser.to_string(CI_value[0])
+
+                        if not isinstance(CI_value[1], str):
+                            CI_value[1] = Querier.time_parser.to_string(CI_value[1])
+
+                        local_query.add('must', 'range', CI_key, [CI_value[0], CI_value[1]])
+                        query.add('must', 'range', CI_key, [CI_value[0], CI_value[1]])
                 elif CI_key in ['benefit:ctxh', 'benefit:drl']:
                     if isinstance(CI_value, str):
                         if CI_value.replace('.', '', 1).isdigit():
@@ -263,13 +275,17 @@ class Querier:
                         'must', 'match', CI_key, CI_value.replace('_', ' '))
 
                 activities = Querier.searcher.search(local_query.get_query())
-                filtered_activities = Querier.a_filter.filter_by_score(
-                    activities)
+                filtered_activities = copy.deepcopy(activities)
+                if is_filter:
+                    filtered_activities = Querier.a_filter.filter_by_score(filtered_activities)
+
                 db_results[CI_key] = int(len(filtered_activities))
 
         # Get all documents match all constraints
         activities = Querier.searcher.search(query.get_query())
-        filtered_activities = Querier.a_filter.filter_by_score(activities)
+        filtered_activities = copy.deepcopy(activities)
+        if is_filter:
+            filtered_activities = Querier.a_filter.filter_by_score(filtered_activities)
         db_results['matching_all_constraints'] = len(filtered_activities)
 
         # for id in self.database.keys():
@@ -302,8 +318,8 @@ class Querier:
         # assert self.cached_db_slot[inform_items] == db_results
         return db_results
 
-    def get_all_activities(self):
-        activities = self.get_db_results()
+    def get_all_activities(self, current_informs):
+        activities = self.get_db_results(current_informs)
         activities = list(activities.values())
         if len(activities) > 10:
             activities = activities[0:10]

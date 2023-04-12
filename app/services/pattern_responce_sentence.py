@@ -124,3 +124,11 @@ complete = [
     'Cảm ơn bạn, chúc bạn có một ngày tốt lành.',
     'Tạm biệt, chúc bạn có một ngày tốt lành.'
 ]
+
+time_request = [
+    'Thời gian diễn ra hoạt động là khi nào'
+]
+
+benefit_request = [
+    'Tham gia hoạt động nhận được quyền lợi gì'
+]
