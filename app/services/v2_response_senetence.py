@@ -41,6 +41,7 @@ class V2ResponseSentenceService:
         print(state_tracker.current_informs)
 
         intent, slot = self.__intent_slot_svc_cli.get_intent_and_slot(message)
+        print('RAW INTENT AND SLOT ', intent, slot)
         reformed_slot = self.reform_slot_value(slot)
         inform_slots = reformed_slot
         request_slots = {}
@@ -57,7 +58,7 @@ class V2ResponseSentenceService:
             request_slots = {intent: 'UNK'}
             intent = 'request'
 
-        print('INTENT AND SLOT: ', intent, request_slots, slot, inform_slots)
+        # print('INTENT AND SLOT: ', intent, request_slots, slot, inform_slots)
 
         self.__slot_intent_state_context.set_state_object(
             'user', intent, request_slots, inform_slots)
@@ -85,10 +86,16 @@ class V2ResponseSentenceService:
             self.cache_current_state(user_id, state_tracker)
             return {'intent': 'no_document', 'request_slots': {}, 'inform_slots': {}}, user_id
         
+        print('STATE ', state)
+        
         if state_tracker.round_num > state_tracker.max_round_num:
             state_tracker.reset()
             self.cache_current_state(user_id, state_tracker)
             return 'Vượt quá số lần hỏi về hoạt động', user_id
+        
+        if state_tracker.get_first_user_request() and request_slots and len(request_slots) > 0:
+            if list(state_tracker.get_first_user_request().keys())[0] != list(request_slots.keys())[0]:
+                return 'Bạn không thể hỏi khi câu hỏi trước chưa được trả lời', user_id
 
         action = self.__action_decider_svc_cli.get_action(state)
         print(action)
@@ -101,7 +108,6 @@ class V2ResponseSentenceService:
         state_tracker = self.__slot_intent_state_context.update_state_tracker(
             state_tracker)
         
-        print(vars(state_tracker))
 
         if intent in ['done', 'thank']:
             self.cache_current_state(user_id, state_tracker)
@@ -120,12 +126,16 @@ class V2ResponseSentenceService:
         if question:
             print('question ', question)
 
+        state_tracker.reform_current_informs()
         self.cache_current_state(user_id, state_tracker)
         return answer if answer else question, user_id
 
     def make_response_sentence(self, data):
         if isinstance(data, str):
             return data
+        
+        if isinstance(data, list):
+            return str(data)
         
         raw_intent = data.get('intent', False)
         
@@ -142,7 +152,7 @@ class V2ResponseSentenceService:
                 value = inform_slots[1]
 
             sentence = self.get_pattern_responce_sentence(intent)
-            return sentence.replace('KEYWORD', value if value else '')
+            return sentence.replace('KEYWORD', str(value) if str(value) else '')
 
         elif raw_intent in ['complete', 'thanks', 'done']:
             sentence = self.get_pattern_responce_sentence('complete')
@@ -164,6 +174,7 @@ class V2ResponseSentenceService:
         return random.sample(getattr(pattern_responce_sentence, intent), 1)[0]
 
     def cache_current_state(self, user_id, state_tracker):
+        print(vars(state_tracker))
         self.__redis.set_key_value('states:' + user_id + ':db_helper', pickle.dumps(state_tracker.db_helper))
         delattr(state_tracker, 'db_helper')
         self.__redis.set_key_value('states:' + user_id + ':state_tracker', pickle.dumps(state_tracker))
@@ -199,9 +210,9 @@ class V2ResponseSentenceService:
                     reformed_slot[key] = [min(benefits), max(benefits)]
 
             elif key in ['jobdescription']:
-                reformed_slot['job_description'] = slot[key]
+                reformed_slot['job_description'] = slot[key].replace('_', ' ')
 
             else:
-                reformed_slot[key] = slot[key]
+                reformed_slot[key] = slot[key].replace('_', ' ')
 
         return reformed_slot

@@ -63,8 +63,8 @@ class UserRequestState(IntentSlotState):
 
         if len(state_tracker.user_requests) == 0:
             state_tracker.add_user_requests(self.action['request_slots'])
-
-        state_tracker.update_state_user(user_action)
+            state_tracker.update_state_user(user_action)
+        
         return state_tracker
 
 
