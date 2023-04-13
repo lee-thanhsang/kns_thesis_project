@@ -35,6 +35,10 @@ job_description = [
     'Một số thông tin của hoạt động này: KEYWORD',
     'Về sự kiện này, đây là một số thông tin nhé: KEYWORD'
 ]
+
+job_description_request = [
+    'Mô tả công việc của hoạt động là gì'
+]
  
 number = [
     'Số người tham gia hoạt động này vào khoảng KEYWORD người.',

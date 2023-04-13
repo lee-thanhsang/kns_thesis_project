@@ -6,7 +6,8 @@ import utils.filter.filter as activity_filter
 import utils.parser.parser as parser
 
 
-no_query_keys = ['number', 'register:way', 'job_description']
+no_query_keys = ['number', 'register:way']
+inform_slots_type_list = ['benefit:others', 'contact', 'job_description', 'register:way', 'requirement']
 
 FILL_INFORM_SCORE_RATE = 0.8
 
@@ -72,7 +73,10 @@ class Querier:
                 for key in keys:
                     if key in value_map.keys():
                         if not isinstance(value_map[key], str) and not isinstance(value_map[key], float):
-                            filled_inform[key] = max(value_map[key], key=len)
+                            if key in inform_slots_type_list:
+                                filled_inform[key] = value_map[key]
+                            else:
+                                filled_inform[key] = max(value_map[key], key=len)
                         else:
                             filled_inform[key] = value_map[key]
 
@@ -270,6 +274,7 @@ class Querier:
                         local_query.add('must', 'range', CI_key, CI_value)
                         query.add('must', 'range', CI_key, CI_value)
                 else:
+                    print(CI_value)
                     local_query.add(
                         'must', 'match', CI_key, CI_value.replace('_', ' '))
                     query.add(
@@ -287,6 +292,7 @@ class Querier:
         filtered_activities = copy.deepcopy(activities)
         if is_filter:
             filtered_activities = Querier.a_filter.filter_by_score(filtered_activities)
+
         db_results['matching_all_constraints'] = len(filtered_activities)
 
         # for id in self.database.keys():
