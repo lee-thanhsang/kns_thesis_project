@@ -263,7 +263,6 @@ class QueryBenchmark:
 
             print('INFORM:', inform)
             print('TEXT:', text)
-            print('LENGTH:', len(satisfied_activities))
 
             filter_score_activities = self.__querier.filter_by_score(
                 copy.deepcopy(res))

@@ -4,8 +4,8 @@ import json
 import sys
 import numpy as np
 
-from proto.action_decider_service_pb2_grpc import ACServiceStub
-from proto.action_decider_service_pb2 import DialogState
+from app.proto.action_decider_service_pb2_grpc import ACServiceStub
+from app.proto.action_decider_service_pb2 import DialogState
 
 class ActionDeciderServiceClient:
     def __init__(self):

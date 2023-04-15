@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from proto import action_decider_service_pb2 as proto_dot_action__decider__service__pb2
+from app.proto import action_decider_service_pb2 as proto_dot_action__decider__service__pb2
 
 
 class ACServiceStub(object):

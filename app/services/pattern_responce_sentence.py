@@ -35,6 +35,10 @@ job_description = [
     'Một số thông tin của hoạt động này: KEYWORD',
     'Về sự kiện này, đây là một số thông tin nhé: KEYWORD'
 ]
+
+job_description_request = [
+    'Mô tả công việc của hoạt động là gì'
+]
  
 number = [
     'Số người tham gia hoạt động này vào khoảng KEYWORD người.',
@@ -118,6 +122,11 @@ place_request = [
 greeting = [
     'Chào bạn, chúc bạn một ngày tốt lành. Mình có thể giúp gì cho bạn?',
     'Chào bạn, mình có thể giúp gì cho bạn.'
+]
+
+meaningless = [
+    """Xin lỗi, tôi chưa hiểu thông tin mà bạn muốn truyền tải.
+    Vui lòng thử lại với những thông tin rõ ràng hơn nhé."""
 ]
  
 complete = [

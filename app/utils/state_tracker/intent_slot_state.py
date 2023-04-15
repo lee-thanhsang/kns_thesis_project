@@ -1,7 +1,7 @@
-from utils.state_tracker.state_tracker import *
+from app.utils.state_tracker.state_tracker import *
 from fuzzywuzzy import fuzz
 
-MIN_FUZZY_SCORE = 0.75
+MIN_FUZZY_SCORE = 75
 
 class IntentSlotState:
     def __init__(self, intent, request_slots, inform_slots):
@@ -31,9 +31,15 @@ class UserInformState(IntentSlotState):
         agent_request = state_tracker.last_agent_request
         if agent_request is not None:
             sub_keys = get_sub_keys(agent_request)
+            is_exist_key = False
             for sub_key in sub_keys:
-                if sub_key not in user_action['inform_slots'].keys():
-                    user_action['inform_slots'][sub_key] = 'anything'
+                if sub_key in user_action['inform_slots'].keys():
+                    is_exist_key = True
+
+            if not is_exist_key:
+                for sub_key in sub_keys:
+                    if sub_key not in user_action['inform_slots'].keys():
+                        user_action['inform_slots'][sub_key] = 'anything'
 
             state_tracker.reset_last_agent_request()
 
@@ -49,15 +55,16 @@ class UserRequestState(IntentSlotState):
         user_action = self.action
         if 'name' in state_tracker.current_informs.keys() and 'name' in self.action['inform_slots']:
             # [FUTURE_FIX] use fuzzy to compare name between activities.
+            print('FUZZY_SCORE', fuzz.ratio(self.action['inform_slots']['name'], state_tracker.current_informs['name']))
             if fuzz.ratio(self.action['inform_slots']['name'], state_tracker.current_informs['name']) < MIN_FUZZY_SCORE:
                 print(self.action['inform_slots']['name'],
                       state_tracker.current_informs['name'])
-                state_tracker.reset_current_informs()
+                state_tracker.reset()
 
         if len(state_tracker.user_requests) == 0:
             state_tracker.add_user_requests(self.action['request_slots'])
-
-        state_tracker.update_state_user(user_action)
+            state_tracker.update_state_user(user_action)
+        
         return state_tracker
 
 

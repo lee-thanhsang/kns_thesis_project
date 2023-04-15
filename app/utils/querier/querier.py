@@ -1,12 +1,13 @@
 from collections import defaultdict
 import copy
-import utils.querier.searcher as searcher
-import utils.querier.query_builder as query_builder
-import utils.filter.filter as activity_filter
-import utils.parser.parser as parser
+import app.utils.querier.searcher as searcher
+import app.utils.querier.query_builder as query_builder
+import app.utils.filter.filter as activity_filter
+import app.utils.parser.parser as parser
 
 
-no_query_keys = ['number', 'register:way', 'job_description']
+no_query_keys = ['number', 'register:way']
+inform_slots_type_list = ['benefit:others', 'contact', 'job_description', 'register:way', 'requirement']
 
 FILL_INFORM_SCORE_RATE = 0.8
 
@@ -52,7 +53,7 @@ class Querier:
         filled_inform = {}
         if len(db_results) == 0:
             for key in keys:
-                filled_inform[key] = 'no match available'
+                filled_inform[key] = 'not match available'
         else:
             i = 0
             value_map = {}
@@ -63,16 +64,19 @@ class Querier:
                     if val:
                         value_map[key] = val
 
-                i = + 1
+                i = i + 1
 
             if len(value_map) == 0:
                 for key in keys:
-                    filled_inform[key] = 'no match available'
+                    filled_inform[key] = 'not match available'
             else:
                 for key in keys:
                     if key in value_map.keys():
                         if not isinstance(value_map[key], str) and not isinstance(value_map[key], float):
-                            filled_inform[key] = max(value_map[key], key=len)
+                            if key in inform_slots_type_list:
+                                filled_inform[key] = value_map[key]
+                            else:
+                                filled_inform[key] = max(value_map[key], key=len)
                         else:
                             filled_inform[key] = value_map[key]
 
@@ -126,7 +130,7 @@ class Querier:
         """
         # Filter non-queryable items and keys with the value 'anything' since those are inconsequential to the constraints
         new_constraints = {k: v for k, v in constraints.items(
-        ) if k not in self.no_query and v != 'anything' and v != 'no match available'}
+        ) if k not in self.no_query and v != 'anything' and v != 'not match available'}
 
         # inform_items = frozenset(new_constraints.items())
         # print('Constraints Search')
@@ -252,6 +256,7 @@ class Querier:
                         CI_value = Querier.time_parser.parse(CI_value)
 
                     if CI_value and len(CI_value) == 2:
+                        print('CI ', CI_value)
                         if not isinstance(CI_value[0], str):
                             CI_value[0] = Querier.time_parser.to_string(CI_value[0])
 
@@ -269,6 +274,7 @@ class Querier:
                         local_query.add('must', 'range', CI_key, CI_value)
                         query.add('must', 'range', CI_key, CI_value)
                 else:
+                    print(CI_value)
                     local_query.add(
                         'must', 'match', CI_key, CI_value.replace('_', ' '))
                     query.add(
@@ -286,6 +292,7 @@ class Querier:
         filtered_activities = copy.deepcopy(activities)
         if is_filter:
             filtered_activities = Querier.a_filter.filter_by_score(filtered_activities)
+
         db_results['matching_all_constraints'] = len(filtered_activities)
 
         # for id in self.database.keys():

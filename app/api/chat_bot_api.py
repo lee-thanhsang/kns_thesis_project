@@ -2,6 +2,7 @@ from flask import Blueprint
 from flask import Flask, request, render_template, redirect, make_response
 from server import *
 from utils.cookie.cookie_generator import *
+import time
 
 chatbot_routes = Blueprint("chatbot_routes", __name__)
 
@@ -9,7 +10,7 @@ COOKIE_KEY = 'kns_chat_bot_user_id'
 
 @chatbot_routes.route('/', methods=['GET'])
 def get_chat_bot_interface():
-    return render_template('chat.html')
+    return render_template('index.html')
 
 @chatbot_routes.route('/v2/get-response-sentence', methods=['POST'])
 def get_intent_from_message():

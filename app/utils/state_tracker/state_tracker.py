@@ -1,10 +1,10 @@
-from utils.querier import querier
+from utils.querier.querier import *
 import copy
 import numpy
 import math
 
 
-no_query_keys = ['number', 'register:way', 'job_description']
+no_query_keys = ['number', 'register:way']
 
 # All possible intents (for one-hot conversion in ST.get_state())
 all_intents = ['inform', 'request', 'done', 'thanks']
@@ -14,12 +14,11 @@ all_slots = ['name', 'time:start', 'time:end', 'place', 'benefit:ctxh', 'benefit
              'contact', 'host', 'job_description', 'number', 'register:time:start',
              'register:time:end', 'register:way', 'requirement']
 
-
 class StateTracker:
     """Tracks the state of the episode/conversation and prepares the state representation for the agent."""
 
     def __init__(self):
-        self.db_helper = querier.Querier()
+        self.db_helper = Querier()
         # self.match_key = usersim_default_key
         self.intents_dict = convert_list_to_dict(all_intents)
         self.num_intents = len(all_intents)
@@ -50,6 +49,9 @@ class StateTracker:
         # self.user_requests = []
         self.cur_action = {}
         self.answer = {}
+        self.history = []
+        self.last_agent_request = None
+        self.user_requests = []
 
     def reset_user_requests(self):
         self.user_requests = []
@@ -81,17 +83,34 @@ class StateTracker:
         if done:
             return self.none_state
 
-        user_action = self.history[-1]
+        history = copy.deepcopy(self.history)
+        history.reverse()
+        user_action = None
+        for item in history:
+            if item['speaker'] == 'User':
+                user_action = item
+                break
+        
         db_results_dict = self.db_helper.get_db_results_for_slots(self.current_informs)
         filtered_db_results_dict = self.db_helper.get_db_results_for_slots(self.current_informs, is_filter=True)
+        print('CURRENT INFORMS ', self.current_informs)
         print('DB ', db_results_dict)
         print('DB Filter', filtered_db_results_dict)
         if filtered_db_results_dict['matching_all_constraints'] == 0:
             return None
+        
+        self.round_num += 1
 
-        last_agent_action = self.history[-2] if len(self.history) > 1 else None
+        last_agent_action = None
+        for item in history:
+            if item['speaker'] == 'Agent':
+                last_agent_action = item
+                break
+
+        print('ACTION ', user_action, last_agent_action)
+
         if last_agent_action and 'intent' in last_agent_action.keys():
-            if last_agent_action['intent'] in ['greeting', 'complete', 'activities']:
+            if last_agent_action['intent'] in ['greeting', 'complete', 'activities', 'meaningless']:
                 last_agent_action['intent'] = 'done'
 
         # Create one-hot of intents to represent the current user action
@@ -113,6 +132,7 @@ class StateTracker:
         for key in user_action['request_slots'].keys():
             sub_keys = get_sub_keys(key)
             for sub_key in sub_keys:
+
                 user_request_slots_rep[self.slots_dict[sub_key]] = 1.0
 
         # Create bag of filled_in slots based on the current_slots
@@ -137,7 +157,7 @@ class StateTracker:
             for key in last_agent_action['request_slots'].keys():
                 sub_keys = get_sub_keys(key)
                 for sub_key in sub_keys:
-                    user_request_slots_rep[self.slots_dict[sub_key]] = 1.0
+                    agent_request_slots_rep[self.slots_dict[sub_key]] = 1.0
 
         # Value representation of the round num
         turn_rep = numpy.zeros((1,)) + self.round_num
@@ -166,13 +186,16 @@ class StateTracker:
             if key in self.slots_dict:
                 kb_binary_rep[self.slots_dict[key]] = numpy.sum(db_results_dict[key] > 0.)
         kb_binary_rep[-1] = numpy.sum(db_results_dict['matching_all_constraints']> 0.)
+
+        print(len(user_act_rep), len(user_inform_slots_rep), len(user_request_slots_rep), len(agent_act_rep))
+        print(user_request_slots_rep)
         
+
         state_representation = numpy.hstack(
             [user_act_rep, user_inform_slots_rep, user_request_slots_rep, agent_act_rep, agent_inform_slots_rep,
              agent_request_slots_rep, current_slots_rep, turn_rep, turn_onehot_rep, kb_count_rep, kb_count_rep_filtered, kb_binary_rep]).flatten()
         
         # print(state_representation)
-        print('LENGTH ', len(state_representation))
 
         return state_representation
 
@@ -190,17 +213,17 @@ class StateTracker:
 
         """
         if agent_action['intent'] == 'inform':
-            assert agent_action['inform_slots']
+            # assert agent_action['inform_slots']
             inform_slots = self.db_helper.fill_inform_slot(agent_action['inform_slots'], self.current_informs)
             agent_action['inform_slots'] = inform_slots
-            assert agent_action['inform_slots']
+            # assert agent_action['inform_slots']
             items = list(agent_action['inform_slots'].items())
             for item in items:
                 key = item[0]
                 value = item[1]
-                assert key != 'match_found'
-                assert value != 'PLACEHOLDER', 'KEY: {}'.format(key)
-                if value != 'not match available':
+                # assert key != 'match_found'
+                # assert value != 'PLACEHOLDER', 'KEY: {}'.format(key)
+                if value != 'not match available' or isinstance(value, list):
                     self.current_informs[key] = value
         # If intent is match_found then fill the action informs with the matches informs (if there is a match)
         elif agent_action['intent'] == 'match_found':
@@ -239,7 +262,7 @@ class StateTracker:
             self.current_informs[key] = value
         user_action.update({'round': self.round_num, 'speaker': 'User'})
         self.history.append(user_action)
-        self.round_num += 1
+        # self.round_num += 1
         self.set_cur_action(user_action)
 
     def add_user_requests(self, request):
@@ -289,6 +312,12 @@ class StateTracker:
     
     def normalize_number_query_doc(self, num_of_docs):
         return (1./(1. + math.exp(-(num_of_docs-5)/1.8)))
+
+    def reform_current_informs(self):
+        for inform in self.current_informs.keys():
+            if inform in inform_slots_type_list:
+                if isinstance(self.current_informs[inform], list):
+                    self.current_informs[inform] = max(self.current_informs[inform], key=len)
 
 
 def convert_list_to_dict(lst):
