@@ -123,6 +123,11 @@ greeting = [
     'Chào bạn, chúc bạn một ngày tốt lành. Mình có thể giúp gì cho bạn?',
     'Chào bạn, mình có thể giúp gì cho bạn.'
 ]
+
+meaningless = [
+    """Xin lỗi, tôi chưa hiểu thông tin mà bạn muốn truyền tải.
+    Vui lòng thử lại với những thông tin rõ ràng hơn nhé."""
+]
  
 complete = [
     'Cảm ơn bạn, chúc bạn có một ngày tốt lành.',

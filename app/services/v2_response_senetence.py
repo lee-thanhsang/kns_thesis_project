@@ -73,7 +73,7 @@ class V2ResponseSentenceService:
         if intent in ['activities']:
             activities = state_tracker.get_activities()
             state_tracker.reset()
-            return activities, user_id
+            return {'intent': 'activities', 'value': activities}, user_id
         
         # [FUTURE_FIX] Handle case inform without request.
         if not state_tracker.get_first_user_request():
@@ -132,7 +132,7 @@ class V2ResponseSentenceService:
 
     def make_response_sentence(self, data):
         if isinstance(data, str):
-            return data
+            return 'Không xử lý được tình huống này.\n' + data
         
         if isinstance(data, list):
             return str(data)
@@ -162,13 +162,19 @@ class V2ResponseSentenceService:
             sentence = self.get_pattern_responce_sentence('greeting')
             return sentence
         
+        elif raw_intent == 'meaningless':
+            sentence = self.get_pattern_responce_sentence('meaningless')
+            return sentence
+        
         #[FUTURE_FIX] Add pattern and replace this case.
         elif raw_intent == 'no_document':
-            return 'Không tìm thấy hoạt động trên yêu cầu của bạn'
+            return 'Rất tiếc, không tìm thấy hoạt động nào dựa trên yêu cầu của bạn.'
         
         #[FUTURE_FIX] Add pattern for responsing all activities.
         elif raw_intent == 'activities':
-            return 'Danh sach cac hoat dong'
+            activities = data.get('value', False)
+            activities_lst = '\n- '.join([activity['_source']['name'] for activity in activities])
+            return 'Một số hoạt động phù hợp với yêu cầu của bạn là:\n' + activities_lst
 
     def get_pattern_responce_sentence(self, intent):
         return random.sample(getattr(pattern_responce_sentence, intent), 1)[0]
