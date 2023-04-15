@@ -6,7 +6,7 @@ from utils.state_tracker.intent_slot_state import *
 from utils.cookie.cookie_generator import *
 from utils.parser.parser import *
 import pickle
-
+import threading
 
 SLOT_SEPARATOR = ', '
 
@@ -16,20 +16,24 @@ class V2ResponseSentenceService:
         intent_slot_svc_cli,
         action_decider_svc_cli,
         redis,
+        clickhouse_cli,
     ):
         self.__intent_slot_svc_cli = intent_slot_svc_cli
         self.__action_decider_svc_cli = action_decider_svc_cli
         self.__redis = redis
+        self.__clickhouse_client = clickhouse_cli
         self.__slot_intent_state_context = IntentSlotStateContext()
         self.__time_parser = TimeParser()
         self.__benefit_parser = BenefitParser()
 
-    def get_intent_and_slot_from_sentence(self, message, user_id):
+    def get_intent_and_slot_from_sentence(self, message, user_id, log):
         state_tracker = StateTracker()
+        is_cache = False
         if user_id:
             state_tracker_str = self.__redis.get_value_from_key('states:' + user_id + ':state_tracker')
             db_helper_str = self.__redis.get_value_from_key('states:' + user_id + ':db_helper')
             if state_tracker_str and db_helper_str:
+                is_cache = True
                 state_tracker = pickle.loads(state_tracker_str)
                 db_helper = pickle.loads(db_helper_str)
                 state_tracker.db_helper = db_helper
@@ -37,13 +41,23 @@ class V2ResponseSentenceService:
                 user_id = generate_cookie()
         else:
             user_id = generate_cookie()
-        
-        print(state_tracker.current_informs)
+
+        # Log user_id and is_cache here.
+        log['user_id'] = str(user_id)
+        log['is_cache'] = is_cache
+
+        # Log raw request here.
+        log['raw_request'] = str(message)
 
         intent, slot = self.__intent_slot_svc_cli.get_intent_and_slot(message)
-        print('RAW INTENT AND SLOT ', intent, slot)
         reformed_slot = self.reform_slot_value(slot)
         inform_slots = reformed_slot
+        
+        # Log intent, slot and reformed slot here.
+        log['intent'] = str(intent)
+        log['slot'] = str(slot)
+        log['reformed_slot'] = str(reformed_slot)
+        
         request_slots = {}
         if intent not in ['inform', 'greeting', 'complete', 'meaningless', 'activities']:
             if intent == 'jobdescription':
@@ -58,8 +72,6 @@ class V2ResponseSentenceService:
             request_slots = {intent: 'UNK'}
             intent = 'request'
 
-        # print('INTENT AND SLOT: ', intent, request_slots, slot, inform_slots)
-
         self.__slot_intent_state_context.set_state_object(
             'user', intent, request_slots, inform_slots)
         state_tracker = self.__slot_intent_state_context.update_state_tracker(
@@ -67,7 +79,7 @@ class V2ResponseSentenceService:
         
         # If intent is greeting or complete, just return responce
         if intent in ['greeting', 'complete', 'meaningless']:
-            self.cache_current_state(user_id, state_tracker)
+            self.cache_current_state(user_id, state_tracker, log)
             return {'intent': intent, 'request_slots': {}, 'inform_slots': {}}, user_id
         
         if intent in ['activities']:
@@ -75,22 +87,23 @@ class V2ResponseSentenceService:
             state_tracker.reset()
             return {'intent': 'activities', 'value': activities}, user_id
         
-        # [FUTURE_FIX] Handle case inform without request.
         if not state_tracker.get_first_user_request():
-            self.cache_current_state(user_id, state_tracker)
+            self.cache_current_state(user_id, state_tracker, log)
             return 'Bọn mình đã lưu thông tin hoạt động. Bạn muốn hỏi điều gì về hoạt động', user_id
         
         state = state_tracker.get_state()
+
+        # Log state which is generated from tracker here.
+        log['state'] = str(state)
+
         if state is None:
             state_tracker.reset()
-            self.cache_current_state(user_id, state_tracker)
+            self.cache_current_state(user_id, state_tracker, log)
             return {'intent': 'no_document', 'request_slots': {}, 'inform_slots': {}}, user_id
-        
-        print('STATE ', state)
         
         if state_tracker.round_num > state_tracker.max_round_num:
             state_tracker.reset()
-            self.cache_current_state(user_id, state_tracker)
+            self.cache_current_state(user_id, state_tracker, log)
             return 'Vượt quá số lần hỏi về hoạt động', user_id
         
         if state_tracker.get_first_user_request() and request_slots and len(request_slots) > 0:
@@ -98,7 +111,9 @@ class V2ResponseSentenceService:
                 return 'Bạn không thể hỏi khi câu hỏi trước chưa được trả lời', user_id
 
         action = self.__action_decider_svc_cli.get_action(state)
-        print(action)
+        
+        # Log action here.
+        log['action'] = str(action)
 
         intent = action['intent']
         request_slots = action['request_slots']
@@ -110,7 +125,7 @@ class V2ResponseSentenceService:
         
 
         if intent in ['done', 'thank']:
-            self.cache_current_state(user_id, state_tracker)
+            self.cache_current_state(user_id, state_tracker, log)
             return {'intent': intent, 'request_slots': {}, 'inform_slots': {}}, user_id
 
         answer = state_tracker.get_answer()
@@ -127,7 +142,8 @@ class V2ResponseSentenceService:
             print('question ', question)
 
         state_tracker.reform_current_informs()
-        self.cache_current_state(user_id, state_tracker)
+        self.cache_current_state(user_id, state_tracker, log)
+
         return answer if answer else question, user_id
 
     def make_response_sentence(self, data):
@@ -179,8 +195,13 @@ class V2ResponseSentenceService:
     def get_pattern_responce_sentence(self, intent):
         return random.sample(getattr(pattern_responce_sentence, intent), 1)[0]
 
-    def cache_current_state(self, user_id, state_tracker):
-        print(vars(state_tracker))
+    def cache_current_state(self, user_id, state_tracker, log):
+        # Log current informs and history of state tracker here.
+        log['current_informs'] = str(state_tracker.current_informs)
+        log['history'] = str(state_tracker.history)
+
+        thread = threading.Thread(target=self.__clickhouse_client.create_dialog, kwargs={'log': log})
+        thread.start()
         self.__redis.set_key_value('states:' + user_id + ':db_helper', pickle.dumps(state_tracker.db_helper))
         delattr(state_tracker, 'db_helper')
         self.__redis.set_key_value('states:' + user_id + ':state_tracker', pickle.dumps(state_tracker))
