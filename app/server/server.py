@@ -1,6 +1,6 @@
-from app.external import *
-from app.services import *
-from app.utils.cache import *
+from external import *
+from services import *
+from utils.cache import *
 
 class Server:
     def __init__(self):

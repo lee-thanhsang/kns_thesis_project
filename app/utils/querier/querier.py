@@ -1,9 +1,9 @@
 from collections import defaultdict
 import copy
-import app.utils.querier.searcher as searcher
-import app.utils.querier.query_builder as query_builder
-import app.utils.filter.filter as activity_filter
-import app.utils.parser.parser as parser
+import utils.querier.searcher as searcher
+import utils.querier.query_builder as query_builder
+import utils.filter.filter as activity_filter
+import utils.parser.parser as parser
 
 
 no_query_keys = ['number', 'register:way']

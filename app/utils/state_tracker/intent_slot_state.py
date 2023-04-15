@@ -1,4 +1,4 @@
-from app.utils.state_tracker.state_tracker import *
+from utils.state_tracker.state_tracker import *
 from fuzzywuzzy import fuzz
 
 MIN_FUZZY_SCORE = 75

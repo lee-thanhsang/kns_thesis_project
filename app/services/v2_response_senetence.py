@@ -1,10 +1,10 @@
 # import pattern_responce_sentence as pattern_responce_sentence
-import app.services.pattern_responce_sentence as pattern_responce_sentence
+import services.pattern_responce_sentence as pattern_responce_sentence
 import random
-from app.utils.state_tracker.state_tracker import StateTracker
-from app.utils.state_tracker.intent_slot_state import *
-from app.utils.cookie.cookie_generator import *
-from app.utils.parser.parser import *
+from utils.state_tracker.state_tracker import StateTracker
+from utils.state_tracker.intent_slot_state import *
+from utils.cookie.cookie_generator import *
+from utils.parser.parser import *
 import pickle
 
 

@@ -3,8 +3,8 @@ import underthesea
 import json
 import sys
 
-from app.proto.intent_slot_service_pb2_grpc import ISServiceStub
-from app.proto.intent_slot_service_pb2 import IntentSlotRecognizeRequest
+from proto.intent_slot_service_pb2_grpc import ISServiceStub
+from proto.intent_slot_service_pb2 import IntentSlotRecognizeRequest
 
 class IntentSlotServiceClient:
     def __init__(self):
