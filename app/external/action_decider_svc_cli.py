@@ -8,8 +8,8 @@ from proto.action_decider_service_pb2_grpc import ACServiceStub
 from proto.action_decider_service_pb2 import DialogState
 
 class ActionDeciderServiceClient:
-    def __init__(self):
-        channel = grpc.insecure_channel('localhost:5003')
+    def __init__(self, config):
+        channel = grpc.insecure_channel(config['action_decider_service']['url'])
         self.__stub = ACServiceStub(channel)
 
     def get_action(self, state):

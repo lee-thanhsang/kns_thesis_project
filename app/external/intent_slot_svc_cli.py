@@ -7,8 +7,8 @@ from proto.intent_slot_service_pb2_grpc import ISServiceStub
 from proto.intent_slot_service_pb2 import IntentSlotRecognizeRequest
 
 class IntentSlotServiceClient:
-    def __init__(self):
-        channel = grpc.insecure_channel('localhost:5002')
+    def __init__(self, config):
+        channel = grpc.insecure_channel(config['intent_slot_service']['url'])
         self.__stub = ISServiceStub(channel)
 
     def get_intent_and_slot(self, message):

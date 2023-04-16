@@ -1,10 +1,10 @@
 from utils.querier.query_builder import *
-from utils.es_client import *
+from utils.es_client.es_client import *
 
 
 class Searcher:
     def __init__(self):
-        self.__es_client = es_client.EsClient()
+        self.__es_client = EsClient()
 
     def search(self, query):
         print(query)
