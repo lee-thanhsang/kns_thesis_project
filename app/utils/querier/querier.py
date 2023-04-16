@@ -21,6 +21,7 @@ class Querier:
         self.cached_db_slot = defaultdict(dict)
         self.cached_db = defaultdict(dict)
         self.no_query = no_query_keys
+        Querier.searcher = searcher.Searcher()
         # Querier.searcher = searcher.Searcher()
         # self.match_key = usersim_default_key
 

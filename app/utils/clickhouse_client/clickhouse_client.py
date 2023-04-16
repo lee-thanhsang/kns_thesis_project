@@ -5,10 +5,12 @@ DIALOG_ORDER = ['user_id', 'is_cache', 'raw_request', 'intent', 'slot', 'reforme
 
 
 class ClickhouseClient:
-    def __init__(self):
-        print('INIT')
+    def __init__(self, config):
         self.__client = clickhouse_connect.get_client(
-            host='xe9pfzmzgi.eu-west-1.aws.clickhouse.cloud', username='default', password='JZDfmD8IAwxJ~', port=8443
+            host=config['clickhouse']['host'], 
+            username=config['clickhouse']['username'], 
+            password=config['clickhouse']['password'], 
+            port=config['clickhouse']['port']
         )
 
     def create_dialog(self, log):

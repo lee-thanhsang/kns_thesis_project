@@ -2,8 +2,16 @@ from elasticsearch import Elasticsearch
 
 
 class EsClient:
-    def __init__(self):
-        self.__client = Elasticsearch('http://localhost:9200')
+    instance = None
+
+    def __init__(self, config=None):
+        print('Es config', config)
+        if not EsClient.instance and config:
+            EsClient.instance = Elasticsearch(
+                config['elasticsearch']
+            )
+
+        self.__client = EsClient.instance
 
     def create_index(self, index_name):
         self.__client.indices.create(
