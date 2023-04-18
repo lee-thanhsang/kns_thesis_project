@@ -175,7 +175,9 @@ class V2ResponseSentenceService:
             val_in_msg = ''
             if value:
                 val_in_msg = ', '.join(value) if isinstance(value, list) else value
-            return sentence.replace('KEYWORD', val_in_msg)
+                return sentence.replace('KEYWORD', val_in_msg)
+            else:
+                "Thông tin này hiện chưa được cập nhật."
 
         elif raw_intent in ['complete', 'thanks', 'done']:
             sentence = self.get_pattern_responce_sentence('complete')
@@ -196,8 +198,12 @@ class V2ResponseSentenceService:
         #[FUTURE_FIX] Add pattern for responsing all activities.
         elif raw_intent == 'activities':
             activities = data.get('value', False)
-            activities_lst = '\n- '.join([activity['_source']['name'] for activity in activities])
-            return 'Một số hoạt động phù hợp với yêu cầu của bạn là:\n' + activities_lst
+            
+            if activities:
+                activities_lst = '\n- '.join([activity['_source']['name'] for activity in activities])
+                return 'Một số hoạt động phù hợp với yêu cầu của bạn là:\n- ' + activities_lst
+            else:
+                return "Rất tiếc, không tìm thấy hoạt động nào dựa trên yêu cầu của bạn."
 
     def get_pattern_responce_sentence(self, intent):
         return random.sample(getattr(pattern_responce_sentence, intent), 1)[0]
