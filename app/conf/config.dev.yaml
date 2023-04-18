@@ -1,0 +1,30 @@
+app:
+  host: 127.0.0.1
+  port: 5000
+
+database: mongodb+srv://xuannam:xuannamt81@web.qpw3q.mongodb.net/thesis-question
+
+intent_slot_service:
+  url: 127.0.0.1:5002
+
+action_decider_service:
+  url: 127.0.0.1:5003
+
+redis:
+  host: 127.0.0.1
+  port: 6379
+
+clickhouse:
+  host: xe9pfzmzgi.eu-west-1.aws.clickhouse.cloud
+  port: 8443
+  username: default
+  password: JZDfmD8IAwxJ~
+
+elasticsearch: http://127.0.0.1:9200
+
+crawler:
+  links: ['groups/cse.ctxh']
+  path: ''
+  cookie_path: ''
+  page_number: 100
+  lastest_date: 01-01-2023
