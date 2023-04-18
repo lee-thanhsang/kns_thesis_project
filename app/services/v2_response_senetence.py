@@ -1,5 +1,5 @@
 # import pattern_responce_sentence as pattern_responce_sentence
-import services.pattern_responce_sentence as pattern_responce_sentence
+import  services.pattern_responce_sentence as pattern_responce_sentence
 import random
 from utils.state_tracker.state_tracker import StateTracker
 from utils.state_tracker.intent_slot_state import *
@@ -168,7 +168,14 @@ class V2ResponseSentenceService:
                 value = inform_slots[1]
 
             sentence = self.get_pattern_responce_sentence(intent)
-            return sentence.replace('KEYWORD', str(value) if str(value) else '')
+
+            if value == "not match available":
+                return "Thông tin này hiện chưa được cập nhật."
+
+            val_in_msg = ''
+            if value:
+                val_in_msg = ', '.join(value) if isinstance(value, list) else value
+            return sentence.replace('KEYWORD', val_in_msg)
 
         elif raw_intent in ['complete', 'thanks', 'done']:
             sentence = self.get_pattern_responce_sentence('complete')
