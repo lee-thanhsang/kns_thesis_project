@@ -71,8 +71,8 @@ benefit_ctxh = [
 ] 
 
 benefit_others = [
-    'Một số quyền lợi khi bạn tham gia hoạt động này: KEYWORD',
-    'Khi tham gia hoạt động, bạn có thể nhận được KEYWORD'
+    'Một số quyền lợi khi bạn tham gia hoạt động này: KEYWORD.',
+    'Khi tham gia hoạt động, bạn có thể được KEYWORD.'
 ]
 
 time_start = [
@@ -135,9 +135,9 @@ complete = [
 ]
 
 time_request = [
-    'Thời gian diễn ra hoạt động là khi nào'
+    'Thời gian diễn ra hoạt động là khi nào?'
 ]
 
 benefit_request = [
-    'Tham gia hoạt động nhận được quyền lợi gì'
+    'Tham gia hoạt động nhận được quyền lợi gì?'
 ]
