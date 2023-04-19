@@ -59,10 +59,21 @@ class V2ResponseSentenceService:
         log['reformed_slot'] = str(reformed_slot)
         
         request_slots = {}
-        if intent not in ['inform', 'greeting', 'complete', 'meaningless', 'activities']:
+        if intent not in ['inform', 'greeting', 'complete', 'meaningless', 'activities', 'anything']:
+            if intent == 'jobdescription':
+                intent = 'job_description'
+
+            if intent == 'registerway':
+                intent = 'register:way'
+            
+            if intent == 'registerdate':
+                intent = 'register:time'
 
             request_slots = {intent: 'UNK'}
             intent = 'request'
+        
+        if intent == 'anything':
+            intent = 'inform'
 
         self.__slot_intent_state_context.set_state_object(
             'user', intent, request_slots, inform_slots)
@@ -77,6 +88,7 @@ class V2ResponseSentenceService:
         if intent in ['activities']:
             activities = state_tracker.get_activities()
             state_tracker.reset()
+            self.cache_current_state(user_id, state_tracker, log)
             return {'intent': 'activities', 'value': activities}, user_id
         
         if not state_tracker.get_first_user_request():
@@ -140,7 +152,7 @@ class V2ResponseSentenceService:
 
     def make_response_sentence(self, data):
         if isinstance(data, str):
-            return 'Không xử lý được tình huống này.\n Bởi vì ' + data
+            return '' + data
         
         if isinstance(data, list):
             return str(data)
@@ -200,6 +212,11 @@ class V2ResponseSentenceService:
                 return 'Một số hoạt động phù hợp với yêu cầu của bạn là:\n- ' + activities_lst
             else:
                 return "Rất tiếc, không tìm thấy hoạt động nào dựa trên yêu cầu của bạn."
+            
+    def end_dialog(self, user_id):
+        self.__redis.remove_by_key('states:' + user_id + ':state_tracker')
+        self.__redis.remove_by_key('states:' + user_id + ':db_helper')
+        return
 
     def get_pattern_responce_sentence(self, intent):
         return random.sample(getattr(pattern_responce_sentence, intent), 1)[0]
@@ -209,8 +226,8 @@ class V2ResponseSentenceService:
         log['current_informs'] = str(state_tracker.current_informs)
         log['history'] = str(state_tracker.history)
 
-        thread = threading.Thread(target=self.__clickhouse_client.create_dialog, kwargs={'log': log})
-        thread.start()
+        # thread = threading.Thread(target=self.__clickhouse_client.create_dialog, kwargs={'log': log})
+        # thread.start()
         self.__redis.set_key_value('states:' + user_id + ':db_helper', pickle.dumps(state_tracker.db_helper))
         delattr(state_tracker, 'db_helper')
         self.__redis.set_key_value('states:' + user_id + ':state_tracker', pickle.dumps(state_tracker))

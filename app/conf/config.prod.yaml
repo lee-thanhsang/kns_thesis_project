@@ -1,0 +1,35 @@
+app:
+  host: 127.0.0.1
+  port: 5000
+
+database: mongodb+srv://xuannam:xuannamt81@web.qpw3q.mongodb.net/thesis-question
+
+intent_slot_service:
+  url: intent-slot-server-1.agreeableplant-5236956c.southeastasia.azurecontainerapps.io
+
+action_decider_service:
+  url: action-decider-server.agreeableplant-5236956c.southeastasia.azurecontainerapps.io
+
+redis:
+  host: thesis-redis.redis.cache.windows.net
+  port: 6379
+  password: LkolYqwoneORFO1NiFwPGQIcmA3fthzu8AzCaLdu2NI=
+
+clickhouse:
+  host: xe9pfzmzgi.eu-west-1.aws.clickhouse.cloud
+  port: 8443
+  username: default
+  password: JZDfmD8IAwxJ~
+
+elasticsearch: 
+  cloud_id: thesis:c291dGhlYXN0YXNpYS5henVyZS5lbGFzdGljLWNsb3VkLmNvbSQzOWEwM2E1ZTQwZGY0YmM2YWNiN2MxMWM4Y2I5NTQ3MCQ4OGRmYTI0MzRlMzg0M2M1YWI0NGQ1NTJiYTVlMDc3MA==
+  user: elastic
+  password: 8OyslX8pSV3d0kGDRk7hCY5X
+  url: 
+
+crawler:
+  links: ['groups/cse.ctxh']
+  path: ''
+  cookie_path: ''
+  page_number: 100
+  lastest_date: 01-01-2023

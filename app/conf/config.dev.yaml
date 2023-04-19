@@ -5,14 +5,15 @@ app:
 database: mongodb+srv://xuannam:xuannamt81@web.qpw3q.mongodb.net/thesis-question
 
 intent_slot_service:
-  url: 127.0.0.1:5002
+  url: localhost:5002
 
 action_decider_service:
-  url: 127.0.0.1:5003
+  url: localhost:5003
 
 redis:
   host: 127.0.0.1
   port: 6379
+  password:
 
 clickhouse:
   host: xe9pfzmzgi.eu-west-1.aws.clickhouse.cloud
@@ -20,7 +21,11 @@ clickhouse:
   username: default
   password: JZDfmD8IAwxJ~
 
-elasticsearch: http://127.0.0.1:9200
+elasticsearch: 
+  url: http://localhost:9200
+  cloud_id:
+  user:
+  password:
 
 crawler:
   links: ['groups/cse.ctxh']
