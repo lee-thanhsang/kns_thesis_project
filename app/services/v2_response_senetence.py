@@ -1,5 +1,5 @@
 # import pattern_responce_sentence as pattern_responce_sentence
-import  services.pattern_responce_sentence as pattern_responce_sentence
+import services.pattern_responce_sentence as pattern_responce_sentence
 import random
 from utils.state_tracker.state_tracker import StateTracker
 from utils.state_tracker.intent_slot_state import *
@@ -60,14 +60,6 @@ class V2ResponseSentenceService:
         
         request_slots = {}
         if intent not in ['inform', 'greeting', 'complete', 'meaningless', 'activities']:
-            if intent == 'jobdescription':
-                intent = 'job_description'
-
-            if intent == 'registerway':
-                intent = 'register:way'
-            
-            if intent == 'registerdate':
-                intent = 'register:time'
 
             request_slots = {intent: 'UNK'}
             intent = 'request'
@@ -89,7 +81,7 @@ class V2ResponseSentenceService:
         
         if not state_tracker.get_first_user_request():
             self.cache_current_state(user_id, state_tracker, log)
-            return 'Bọn mình đã lưu thông tin hoạt động. Bạn muốn hỏi điều gì về hoạt động', user_id
+            return 'Bọn mình đã lưu thông tin hoạt động. Bạn muốn hỏi điều gì về hoạt động.', user_id
         
         state = state_tracker.get_state()
 
@@ -104,11 +96,11 @@ class V2ResponseSentenceService:
         if state_tracker.round_num > state_tracker.max_round_num:
             state_tracker.reset()
             self.cache_current_state(user_id, state_tracker, log)
-            return 'Vượt quá số lần hỏi về hoạt động', user_id
+            return 'Vượt quá số lần hỏi về hoạt động.', user_id
         
         if state_tracker.get_first_user_request() and request_slots and len(request_slots) > 0:
             if list(state_tracker.get_first_user_request().keys())[0] != list(request_slots.keys())[0]:
-                return 'Bạn không thể hỏi khi câu hỏi trước chưa được trả lời', user_id
+                return 'Bạn không thể hỏi khi câu hỏi trước chưa được trả lời.', user_id
 
         action = self.__action_decider_svc_cli.get_action(state)
         
@@ -148,7 +140,7 @@ class V2ResponseSentenceService:
 
     def make_response_sentence(self, data):
         if isinstance(data, str):
-            return 'Không xử lý được tình huống này.\n' + data
+            return 'Không xử lý được tình huống này.\n Bởi vì ' + data
         
         if isinstance(data, list):
             return str(data)
@@ -160,24 +152,28 @@ class V2ResponseSentenceService:
             value = None
             if raw_intent == 'request':
                 request_slots = list(data.get('request_slots', False).items())[0]
-                intent = request_slots[0].replace(':', '_') + '_' + raw_intent
+                intent = request_slots[0] + '_' + raw_intent
+                
+                sentence = self.get_pattern_responce_sentence(intent)
+                return sentence
 
             if raw_intent == 'inform':
                 inform_slots = list(data.get('inform_slots', False).items())[0]
                 intent = inform_slots[0].replace(':', '_')
                 value = inform_slots[1]
 
-            sentence = self.get_pattern_responce_sentence(intent)
+                if value == "not match available":
+                    return "Thông tin này hiện chưa được cập nhật."
 
-            if value == "not match available":
-                return "Thông tin này hiện chưa được cập nhật."
+                val_in_msg = ''
+                if value:
+                    sentence = self.get_pattern_responce_sentence(intent)
 
-            val_in_msg = ''
-            if value:
-                val_in_msg = ', '.join(value) if isinstance(value, list) else value
-                return sentence.replace('KEYWORD', val_in_msg)
-            else:
-                "Thông tin này hiện chưa được cập nhật."
+                    val_in_msg = ', '.join(value) if isinstance(value, list) else value
+                    return sentence.replace('KEYWORD', val_in_msg)
+                else:
+                    "Thông tin này hiện chưa được cập nhật."
+            
 
         elif raw_intent in ['complete', 'thanks', 'done']:
             sentence = self.get_pattern_responce_sentence('complete')
