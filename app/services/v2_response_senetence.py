@@ -59,10 +59,21 @@ class V2ResponseSentenceService:
         log['reformed_slot'] = str(reformed_slot)
         
         request_slots = {}
-        if intent not in ['inform', 'greeting', 'complete', 'meaningless', 'activities']:
+        if intent not in ['inform', 'greeting', 'complete', 'meaningless', 'activities', 'anything']:
+            if intent == 'jobdescription':
+                intent = 'job_description'
+
+            if intent == 'registerway':
+                intent = 'register:way'
+            
+            if intent == 'registerdate':
+                intent = 'register:time'
 
             request_slots = {intent: 'UNK'}
             intent = 'request'
+        
+        if intent == 'anything':
+            intent = 'inform'
 
         self.__slot_intent_state_context.set_state_object(
             'user', intent, request_slots, inform_slots)
@@ -77,6 +88,7 @@ class V2ResponseSentenceService:
         if intent in ['activities']:
             activities = state_tracker.get_activities()
             state_tracker.reset()
+            self.cache_current_state(user_id, state_tracker, log)
             return {'intent': 'activities', 'value': activities}, user_id
         
         if not state_tracker.get_first_user_request():
@@ -140,7 +152,7 @@ class V2ResponseSentenceService:
 
     def make_response_sentence(self, data):
         if isinstance(data, str):
-            return 'Không xử lý được tình huống này.\n Bởi vì ' + data
+            return '' + data
         
         if isinstance(data, list):
             return str(data)

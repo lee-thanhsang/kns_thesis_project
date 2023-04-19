@@ -169,6 +169,7 @@ class DefaultState(IntentSlotState):
 intent_slot_state_factory_map = {
     'user': {
         'inform': UserInformState,
+        'anything': UserInformState,
         'request': UserRequestState,
         'complete': UserCompleteState,
         'default': UserDefaultState,

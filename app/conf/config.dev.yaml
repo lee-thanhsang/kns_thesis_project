@@ -20,7 +20,8 @@ clickhouse:
   username: default
   password: JZDfmD8IAwxJ~
 
-elasticsearch: http://127.0.0.1:9200
+elasticsearch: 
+  url: localhost:9200
 
 crawler:
   links: ['groups/cse.ctxh']

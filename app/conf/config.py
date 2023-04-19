@@ -1,7 +1,7 @@
 import yaml
 import os
 
-CONFIG_FILE = 'conf/config.dev.yaml'
+CONFIG_FILE = 'conf/config.prod.yaml'
 
 class Config:
     def __init__(self):
@@ -25,6 +25,7 @@ class Config:
         self.__config['redis'] = {}
         self.__config['redis']['host'] = os.getenv('REDIS__HOST') or file_config['redis']['host']
         self.__config['redis']['port'] = os.getenv('REDIS__PORT') or file_config['redis']['port']
+        self.__config['redis']['password'] = os.getenv('REDIS__PASSWORD') or file_config['redis']['password']
 
         self.__config['clickhouse'] = {}
         self.__config['clickhouse']['host'] = os.getenv('CLICKHOUSE__HOST') or file_config['clickhouse']['host']
@@ -32,7 +33,12 @@ class Config:
         self.__config['clickhouse']['username'] = os.getenv('CLICKHOUSE__USERNAME') or file_config['clickhouse']['username']
         self.__config['clickhouse']['password'] = os.getenv('CLICKHOUSE__PASSWORD') or file_config['clickhouse']['password']
 
-        self.__config['elasticsearch'] = os.getenv('ELASTICSEARCH') or file_config['elasticsearch']
+        self.__config['elasticsearch'] = {}
+        self.__config['elasticsearch']['url'] = os.getenv('ELASTICSEARCH__URL') or file_config['elasticsearch']['url']
+        self.__config['elasticsearch']['cloud_id'] = os.getenv('ELASTICSEARCH__CLOUD_ID') or file_config['elasticsearch']['cloud_id']
+        self.__config['elasticsearch']['user'] = os.getenv('ELASTICSEARCH__USER') or file_config['elasticsearch']['user']
+        self.__config['elasticsearch']['password'] = os.getenv('ELASTICSEARCH__PASSWORD') or file_config['elasticsearch']['password']
+       
 
     def get(self):
         return self.__config

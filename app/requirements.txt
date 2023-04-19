@@ -66,7 +66,6 @@ regex==2023.3.23
 requests==2.28.2
 requests-html==0.10.0
 rsa==4.9
-scikit-learn==1.2.2
 scipy==1.10.1
 seqeval==1.2.2
 six==1.16.0

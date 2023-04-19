@@ -4,12 +4,17 @@ from elasticsearch import Elasticsearch
 class EsClient:
     instance = None
 
-    def __init__(self, config=None):
-        print('Es config', config)
+    def __init__(self, config=None): 
         if not EsClient.instance and config:
-            EsClient.instance = Elasticsearch(
-                config['elasticsearch']
-            )
+            if config['elasticsearch']['cloud_id']:
+                EsClient.instance = Elasticsearch(
+                    cloud_id=config['elasticsearch']['cloud_id'],
+                    basic_auth=(config['elasticsearch']['user'], config['elasticsearch']['password'])
+                )
+            else: 
+                EsClient.instance = Elasticsearch(
+                    config['elasticsearch']['url']
+                )
 
         self.__client = EsClient.instance
 
