@@ -10,3 +10,6 @@ class Redis:
 
     def get_value_from_key(self, key: str) -> str:
         return self.__redis.get(key)
+    
+    def remove_by_key(self, key: str):
+        return self.__redis.delete(key)

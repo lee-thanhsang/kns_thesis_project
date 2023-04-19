@@ -16,14 +16,14 @@ class Server:
         self.__intent_slot_svc_cli = IntentSlotServiceClient(config)
         self.__action_decider_svc_cli = ActionDeciderServiceClient(config)
         self.__redis = Redis(config)
-        self.__clickhouse_client = ClickhouseClient(config)
+        self.clickhouse_client = ClickhouseClient(config)
 
 
         self.v2_response_sentence = V2ResponseSentenceService(
             self.__intent_slot_svc_cli,
             self.__action_decider_svc_cli,
             self.__redis,
-            self.__clickhouse_client
+            self.clickhouse_client
         )
 
 server = Server()
