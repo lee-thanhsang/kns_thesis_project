@@ -11,9 +11,9 @@ action_decider_service:
   url: action-decider-server.agreeableplant-5236956c.southeastasia.azurecontainerapps.io
 
 redis:
-  host: thesis-redis.redis.cache.windows.net
-  port: 6379
-  password: LkolYqwoneORFO1NiFwPGQIcmA3fthzu8AzCaLdu2NI=
+  host: redis-12185.c294.ap-northeast-1-2.ec2.cloud.redislabs.com
+  port: 12185
+  password: HmnsATomgLg5qXkAsfCxkiU4qpzopAqS
 
 clickhouse:
   host: xe9pfzmzgi.eu-west-1.aws.clickhouse.cloud
