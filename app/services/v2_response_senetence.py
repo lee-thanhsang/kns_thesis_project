@@ -81,7 +81,7 @@ class V2ResponseSentenceService:
             state_tracker)
         
         # If intent is greeting or complete, just return responce
-        if intent in ['greeting', 'complete', 'meaningless']:
+        if intent in ['greeting', 'complete', 'meaningless', 'UNK']:
             self.cache_current_state(user_id, state_tracker, log)
             return {'intent': intent, 'request_slots': {}, 'inform_slots': {}}, user_id
         
@@ -195,7 +195,7 @@ class V2ResponseSentenceService:
             sentence = self.get_pattern_responce_sentence('greeting')
             return sentence
         
-        elif raw_intent == 'meaningless':
+        elif raw_intent in ['meaningless', 'UNK']:
             sentence = self.get_pattern_responce_sentence('meaningless')
             return sentence
         
