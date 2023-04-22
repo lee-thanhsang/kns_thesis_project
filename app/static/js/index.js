@@ -54,6 +54,30 @@ $(document).ready(function () {
             }
     });
 
+    const buttonEndchat = document.querySelector(".end-chat");
+    buttonEndchat.addEventListener("click", async function(e) {
+        end_chat_result = await fetch('/v2/end-dialog', {
+            method: 'POST'
+        }).then((response) => {
+            if (!response.ok) {
+                throw new Error(response.error)
+            }
+            return response.json();
+        });
+    });
+
+    const buttonNewchat = document.querySelector(".make-a-new-chat");
+    buttonNewchat.addEventListener("click", async function(e) {
+        $('.chat-mail').addClass('hide');
+        $('.chat-body').removeClass('hide');
+        $('.chat-input').removeClass('hide');
+        $('.chat-header-option').removeClass('hide');
+
+        $('.chat-session-end').addClass('hide');
+        $('.chat-header-option').removeClass('hide');
+    });
+
+
     async function output(userMessage) {
         botDiv = addUserEntry(userMessage);
         let formData = new FormData();
