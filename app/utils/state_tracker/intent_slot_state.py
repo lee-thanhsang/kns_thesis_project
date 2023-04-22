@@ -64,8 +64,11 @@ class UserRequestState(IntentSlotState):
             state_tracker.add_user_requests(self.action['request_slots'])
             # Handle confirmation case.
             request_slot_key = list(self.action['request_slots'].keys())[0]
-            if request_slot_key in self.action['inform_slots'].keys():
-                self.action['inform_slots'].pop(request_slot_key)
+            request_slot_parent_key = get_parent_key(request_slot_key)
+            request_slot_keys = get_sub_keys(request_slot_parent_key)
+            for key in request_slot_keys:
+                if key in self.action['inform_slots'].keys():
+                    self.action['inform_slots'].pop(key)
 
             user_action = self.action
             state_tracker.update_state_user(user_action)
