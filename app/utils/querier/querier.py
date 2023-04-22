@@ -7,7 +7,7 @@ import utils.parser.parser as parser
 
 
 no_query_keys = ['number', 'register:way']
-inform_slots_type_list = ['benefit:others', 'contact', 'job_description', 'register:way', 'requirement']
+inform_slots_type_list = ['benefit:others', 'contact', 'job_description', 'register:way', 'requirement', 'benefit:drl', 'benefit:ctxh']
 
 FILL_INFORM_SCORE_RATE = 0.8
 
@@ -169,6 +169,8 @@ class Querier:
                 if isinstance(v, str):
                     if v.replace('.', '', 1).isdigit():
                         v = [float(v)]
+                elif isinstance(v, float):
+                    v = [float(v)]
 
                 if len(v) >= 1:
                     query.add('must', 'range', k, v)
@@ -270,6 +272,8 @@ class Querier:
                     if isinstance(CI_value, str):
                         if CI_value.replace('.', '', 1).isdigit():
                             CI_value = [float(CI_value)]
+                    elif isinstance(CI_value, float):
+                        CI_value = [float(CI_value)]
 
                     if len(CI_value) >= 1:
                         local_query.add('must', 'range', CI_key, CI_value)

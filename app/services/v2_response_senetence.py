@@ -191,8 +191,12 @@ class V2ResponseSentenceService:
                 val_in_msg = ''
                 if value:
                     sentence = self.get_pattern_responce_sentence(intent)
+                    reformed_value = []
+                    if isinstance(value, list):
+                        for item in value:
+                            reformed_value.append(str(item))
 
-                    val_in_msg = ', '.join(value) if isinstance(value, list) else value
+                    val_in_msg = ', '.join(reformed_value) if isinstance(value, list) else str(value)
                     return sentence.replace('KEYWORD', val_in_msg)
                 else:
                     "Thông tin này hiện chưa được cập nhật."
