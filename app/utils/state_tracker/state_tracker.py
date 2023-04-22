@@ -323,7 +323,10 @@ class StateTracker:
         for inform in self.current_informs.keys():
             if inform in inform_slots_type_list:
                 if isinstance(self.current_informs[inform], list):
-                    self.current_informs[inform] = max(self.current_informs[inform], key=len)
+                    if isinstance(self.current_informs[inform][0], float):
+                        self.current_informs[inform] = max(self.current_informs[inform])
+                    else:
+                        self.current_informs[inform] = max(self.current_informs[inform], key=len)
 
 
 def convert_list_to_dict(lst):
