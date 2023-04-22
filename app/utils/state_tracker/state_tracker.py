@@ -343,3 +343,13 @@ def get_sub_keys(key):
         sub_keys = [key]
 
     return sub_keys
+
+def get_parent_key(key):
+    if key in ['time:start', 'time:end']:
+        return 'time'
+    elif key in ['register:time:start', 'register:time:end']:
+        return 'register:time'
+    elif key in ['benefit:drl', 'benefit:ctxh', 'benefit:others']:
+        return 'benefit'
+    else:
+        return key
