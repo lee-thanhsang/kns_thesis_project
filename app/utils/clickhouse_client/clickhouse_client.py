@@ -1,7 +1,7 @@
 import clickhouse_connect
 
 DIALOG_ORDER = ['user_id', 'is_cache', 'raw_request', 'intent', 'slot', 'reformed_slot',
-                'state', 'action', 'raw_response', 'current_informs', 'history']
+                'state', 'action', 'raw_response', 'current_informs', 'history', 'confirmation', 'wrong_decision']
 
 
 class ClickhouseClient:

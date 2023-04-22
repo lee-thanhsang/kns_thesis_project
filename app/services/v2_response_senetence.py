@@ -57,6 +57,9 @@ class V2ResponseSentenceService:
         log['intent'] = str(intent)
         log['slot'] = str(slot)
         log['reformed_slot'] = str(reformed_slot)
+
+        if intent in reformed_slot.keys():
+            log['confirmation'] = str((intent, reformed_slot[intent]))
         
         request_slots = {}
         if intent not in ['inform', 'greeting', 'complete', 'meaningless', 'activities', 'anything']:
@@ -122,6 +125,14 @@ class V2ResponseSentenceService:
         intent = action['intent']
         request_slots = action['request_slots']
         inform_slots = action['inform_slots']
+
+        print(state_tracker.user_requests)
+        if intent == 'inform' and len(state_tracker.user_requests) > 0 and list(state_tracker.user_requests[0].keys())[0] not in inform_slots.keys():
+            log['wrong_decision'] = str({
+                'user_request': state_tracker.user_requests[0],
+                'agent_inform': inform_slots,
+            })
+
         self.__slot_intent_state_context.set_state_object(
             'agent', intent, request_slots, inform_slots)
         state_tracker = self.__slot_intent_state_context.update_state_tracker(
