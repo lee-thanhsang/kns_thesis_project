@@ -52,6 +52,7 @@ class StateTracker:
         self.history = []
         self.last_agent_request = None
         self.user_requests = []
+        self.confirmed_slot = {}
 
     def reset_user_requests(self):
         self.user_requests = []
@@ -213,8 +214,13 @@ class StateTracker:
 
         """
         if agent_action['intent'] == 'inform':
-            # assert agent_action['inform_slots']
-            inform_slots = self.db_helper.fill_inform_slot(agent_action['inform_slots'], self.current_informs)
+            # get inform slot from request slot for ensuring that inform slot for answer match with request slot.
+            if list(self.user_requests[0].keys())[0] not in agent_action['inform_slots'].keys():
+                inform = {list(self.user_requests[0].keys())[0]: 'PLACEHOLDER'}
+                inform_slots = self.db_helper.fill_inform_slot(inform, self.current_informs)
+            else:
+                inform_slots = self.db_helper.fill_inform_slot(agent_action['inform_slots'], self.current_informs)
+
             agent_action['inform_slots'] = inform_slots
             # assert agent_action['inform_slots']
             items = list(agent_action['inform_slots'].items())

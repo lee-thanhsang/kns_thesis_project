@@ -3,6 +3,7 @@ from flask import Flask, request, render_template, redirect, make_response
 from server.server import *
 from utils.cookie.cookie_generator import *
 import threading
+import traceback
 
 chatbot_routes = Blueprint("chatbot_routes", __name__)
 
@@ -14,21 +15,23 @@ def get_chat_bot_interface():
 
 @chatbot_routes.route('/v2/get-response-sentence', methods=['POST'])
 def get_intent_from_message():
+    data = request.form.to_dict()
+    user_id = request.cookies.get(COOKIE_KEY)
+    log = {}
     try:
-        data = request.form.to_dict()
-        user_id = request.cookies.get(COOKIE_KEY)
-        log = {}
         response_sentence, user_id = server.v2_response_sentence.get_intent_and_slot_from_sentence(data['sentence'], user_id, log)
         output_sentence = server.v2_response_sentence.make_response_sentence(response_sentence)
         log['raw_response'] = str(output_sentence)
         
     except Exception as e:
         output_sentence = 'Hệ thống gặp lỗi khi xử lý tin nhắn của bạn. Xin lỗi vì sự bất tiện này.'
-        log['raw_response'] = str(e)
+        log['raw_response'] = str(traceback.format_exc())
+        traceback.print_exc()
 
     # Create response and cookies
     resp = make_response({'sentence': output_sentence})
-    resp.set_cookie(COOKIE_KEY, user_id)
+    if user_id:
+        resp.set_cookie(COOKIE_KEY, user_id)
 
     # Store to clickhouse.
     thread = threading.Thread(target=server.clickhouse_client.create_dialog, kwargs={'log': log})
