@@ -2,7 +2,7 @@ import re
 import dateparser as dp
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from time_pattern import composed_pattern
+from utils.parser.time_pattern import composed_pattern
 
 
 time_period = {
@@ -12,20 +12,22 @@ time_period = {
     'tối': ['17:00', '20:00']
 }
 
-class TimeParser:
+class TextTimeParser:
     def __init__(self):
         self.today = datetime.now().date()
         self.current_day = self.today.strftime("%d")
         self.current_month = self.today.strftime("%m")
         self.current_year = self.today.strftime("%Y")
 
-    def time_parser(self, raw_time):
+    def parse(self, raw_time):
         for key, pattern in composed_pattern.items():
             value = re.findall(pattern, raw_time)
             if value:
-                result = getattr(TimeParser, "parse_" + key)(self, value[0], key)
+                result = getattr(TextTimeParser, "parse_" + key)(self, value[0], key)
 
                 return result
+        
+        return None
 
     def parse_time_period(self, value, key=None):
         return time_period.get(value, None)
