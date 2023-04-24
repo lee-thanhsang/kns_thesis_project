@@ -1,14 +1,12 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from utils.parser.time_parser import *
 
 
 class TimeParser:
-    def __init__(self):
-        self.__text_time_parser = TextTimeParser()
-
     def parse(self, text):
-        text = self.__text_time_parser.parse(text)
+        # text = self.__text_time_parser.parse(text)
+        # if not text:
+        #     return
         if not text:
             return
 

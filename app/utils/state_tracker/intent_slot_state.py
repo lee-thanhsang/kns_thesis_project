@@ -87,6 +87,16 @@ class UserCompleteState(IntentSlotState):
         state_tracker.remove_user_requests()
         return state_tracker
 
+class UserActivitiesState(IntentSlotState):
+    def __init__(self, intent, request_slots, inform_slots):
+        super().__init__(intent, request_slots, inform_slots)
+
+    def update_state_tracker(self, state_tracker: StateTracker):
+        print('activities state update')
+        state_tracker.reset()
+        user_action = self.action
+        state_tracker.update_state_user(user_action)
+        return state_tracker
 
 class UserDefaultState(IntentSlotState):
     def __init__(self, intent, request_slots, inform_slots):
@@ -179,6 +189,7 @@ intent_slot_state_factory_map = {
         'inform': UserInformState,
         'anything': UserInformState,
         'request': UserRequestState,
+        'activities': UserActivitiesState,
         'complete': UserCompleteState,
         'default': UserDefaultState,
     },
