@@ -1,9 +1,17 @@
-import datetime
-from dateutil import relativedelta
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+from utils.parser.time_parser import *
 
 
 class TimeParser:
+    def __init__(self):
+        self.__text_time_parser = TextTimeParser()
+
     def parse(self, text):
+        text = self.__text_time_parser.parse(text)
+        if not text:
+            return
+
         time_parts = text.split()
         if len(time_parts) > 2:
             return
@@ -15,8 +23,8 @@ class TimeParser:
         dmy_parts.reverse()
         hms_parts = []
         if len(time_parts) > 1:
-            if len(dmy_parts) < 3:
-                return
+            # if len(dmy_parts) < 3:
+            #     return
             
             hms_parts = time_parts[0].split(':')
 
@@ -38,10 +46,11 @@ class TimeParser:
 
         next_time_list = [0 for i in range(6)]
         next_time_list[least_unit] += 1
+        print(time_list)
 
         try:
-            cur_time = datetime.datetime(time_list[0], time_list[1], time_list[2], time_list[3], time_list[4], time_list[5])
-            next_time = cur_time + relativedelta.relativedelta(
+            cur_time = datetime(time_list[0], time_list[1], time_list[2], time_list[3], time_list[4], time_list[5])
+            next_time = cur_time + relativedelta(
                 years=next_time_list[0], months=next_time_list[1], days=next_time_list[2],
                 hours=next_time_list[3], minutes=next_time_list[4], seconds=next_time_list[5]
             )
