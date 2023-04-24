@@ -33,3 +33,6 @@ crawler:
   cookie_path: ''
   page_number: 100
   lastest_date: 01-01-2023
+
+facebook:
+  verify_token: 

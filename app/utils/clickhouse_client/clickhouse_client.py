@@ -14,12 +14,16 @@ class ClickhouseClient:
         )
 
     def create_dialog(self, log):
-        log_list = []
-        for field in DIALOG_ORDER:
-            if field in log.keys():
-                log_list.append(log[field])
-            else:
-                log_list.append(None)
+        try:
+            log_list = []
+            for field in DIALOG_ORDER:
+                if field in log.keys():
+                    log_list.append(log[field])
+                else:
+                    log_list.append(None)
 
-        log_list = [log_list]
-        self.__client.insert('dialog', log_list, column_names = DIALOG_ORDER)
+            log_list = [log_list]
+            self.__client.insert('dialog', log_list, column_names = DIALOG_ORDER)
+        
+        except Exception as e:
+            print(e)

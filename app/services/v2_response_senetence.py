@@ -29,6 +29,11 @@ class V2ResponseSentenceService:
         self.__text_time_parser = TextTimeParser()
 
     def get_intent_and_slot_from_sentence(self, message, user_id, log):
+        prev_message = self.__redis.get_value_from_key('messages:' + user_id)
+        if prev_message:
+            return 'Chúng mình đang xử lý tin nhắn trước của bạn. Vui lòng đợi phản hồi và không nhập thêm tin nhắn', user_id     
+
+        self.__redis.set_key_value('messages:' + user_id, message)
         state_tracker = StateTracker()
         is_cache = False
         if user_id:
@@ -39,8 +44,6 @@ class V2ResponseSentenceService:
                 state_tracker = pickle.loads(state_tracker_str)
                 db_helper = pickle.loads(db_helper_str)
                 state_tracker.db_helper = db_helper
-            else:
-                user_id = generate_cookie()
         else:
             user_id = generate_cookie()
 
@@ -233,6 +236,7 @@ class V2ResponseSentenceService:
     def end_dialog(self, user_id):
         self.__redis.remove_by_key('states:' + user_id + ':state_tracker')
         self.__redis.remove_by_key('states:' + user_id + ':db_helper')
+        self.__redis.remove_by_key('messages:' + user_id)
         return
 
     def get_pattern_responce_sentence(self, intent):
@@ -248,6 +252,7 @@ class V2ResponseSentenceService:
         self.__redis.set_key_value('states:' + user_id + ':db_helper', pickle.dumps(state_tracker.db_helper))
         delattr(state_tracker, 'db_helper')
         self.__redis.set_key_value('states:' + user_id + ':state_tracker', pickle.dumps(state_tracker))
+        self.__redis.remove_by_key('messages:' + user_id)
 
     def reform_slot_value(self, slot):
         reformed_slot = {}
