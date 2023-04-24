@@ -1,7 +1,7 @@
 import yaml
 import os
 
-CONFIG_FILE = 'conf/config.prod.yaml'
+CONFIG_FILE = 'conf/config.dev.yaml'
 
 class Config:
     def __init__(self):

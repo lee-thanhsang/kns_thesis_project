@@ -7,6 +7,7 @@ from utils.cookie.cookie_generator import *
 from utils.parser.parser import *
 import pickle
 import threading
+from utils.parser.time_parser import *
 
 SLOT_SEPARATOR = ', '
 
@@ -25,6 +26,7 @@ class V2ResponseSentenceService:
         self.__slot_intent_state_context = IntentSlotStateContext()
         self.__time_parser = TimeParser()
         self.__benefit_parser = BenefitParser()
+        self.__text_time_parser = TextTimeParser()
 
     def get_intent_and_slot_from_sentence(self, message, user_id, log):
         state_tracker = StateTracker()
@@ -254,7 +256,8 @@ class V2ResponseSentenceService:
                 sub_slots = slot[key].split(SLOT_SEPARATOR)
                 time_ranges = []
                 for sub_slot in sub_slots:
-                    time_range = self.__time_parser.parse(sub_slot)
+                    text_time = self.__text_time_parser.parse(sub_slot)
+                    time_range = self.__time_parser.parse(text_time)
                     if time_range is not None:
                         time_ranges.append(time_range)
 
