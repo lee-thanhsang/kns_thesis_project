@@ -37,7 +37,11 @@ job_description = [
 ]
 
 job_description_request = [
-    'Mô tả công việc của hoạt động là gì'
+    "Bạn có thể cho mình thông tin chi tiết hơn về công việc mà mình sẽ làm trong hoạt động này được không?",
+    "Bạn cung cấp cho mình thêm thông tin mô tả công việc của hoạt động này nhé?",
+    "Bạn có thể cho mình biết mô tả công việc của hoạt động này là gì không?",
+    "Hoạt động này có mô tả công việc là gì vậy bạn?",
+    'Bạn có thể cung cấp thông tin về công việc mà bạn sẽ thực hiện trong hoạt động được không?'
 ]
  
 number = [
@@ -45,7 +49,6 @@ number = [
     'Hoạt động này cần KEYWORD người tham gia.',
     'Sự kiện này thu hút khoảng KEYWORD người tham gia.'
 ]
- 
 
 register_way = [
     'Cách thức đăng kí tham gia: KEYWORD',
@@ -135,9 +138,15 @@ complete = [
 ]
 
 time_request = [
-    'Thời gian diễn ra hoạt động là khi nào?'
+    "Bạn có thể cho mình biết hoạt động này diễn ra khi nào không?",
+    "Hoạt động này diễn ra trong thời gian nào, bạn có thể có mình biết được không?",
+    "Bạn có thông tin về thời gian diễn ra của hoạt động này không?",
+    "Bạn có thể cung cấp thêm thông tin về thời điểm diễn ra của hoạt động này được không?",
+    "Mình cần biết thời gian diễn ra của hoạt động này. Bạn có thể cung cấp thêm cho mình được không?"
 ]
 
 benefit_request = [
     'Tham gia hoạt động nhận được quyền lợi gì?'
 ]
+
+

@@ -31,7 +31,7 @@ class V2ResponseSentenceService:
     def get_intent_and_slot_from_sentence(self, message, user_id, log):
         prev_message = self.__redis.get_value_from_key('messages:' + user_id)
         if prev_message:
-            return 'Chúng mình đang xử lý tin nhắn trước của bạn. Vui lòng đợi phản hồi và không nhập thêm tin nhắn', user_id     
+            return 'Chúng mình đang xử lý tin nhắn trước của bạn. Bạn vui lòng đợi phản hồi và không nhập thêm tin nhắn nhé!', user_id     
 
         self.__redis.set_key_value('messages:' + user_id, message)
         state_tracker = StateTracker()
@@ -116,11 +116,11 @@ class V2ResponseSentenceService:
         if state_tracker.round_num > state_tracker.max_round_num:
             state_tracker.reset()
             self.cache_current_state(user_id, state_tracker, log)
-            return 'Vượt quá số lần hỏi về hoạt động.', user_id
+            return 'Bạn đã vượt quá số lần hỏi về hoạt động này.', user_id
         
         if state_tracker.get_first_user_request() and request_slots and len(request_slots) > 0:
             if list(state_tracker.get_first_user_request().keys())[0] != list(request_slots.keys())[0]:
-                return 'Bạn không thể hỏi khi câu hỏi trước chưa được trả lời.', user_id
+                return 'Chúng mình đang xử lý tin nhắn trước của bạn. Bạn vui lòng đợi phản hồi và không nhập thêm tin nhắn nhé!', user_id
 
         action = self.__action_decider_svc_cli.get_action(state)
         
@@ -131,7 +131,7 @@ class V2ResponseSentenceService:
         request_slots = action['request_slots']
         inform_slots = action['inform_slots']
 
-        print(state_tracker.user_requests)
+        # print(state_tracker.user_requests)
         if intent == 'inform' and len(state_tracker.user_requests) > 0 and list(state_tracker.user_requests[0].keys())[0] not in inform_slots.keys():
             log['wrong_decision'] = str({
                 'user_request': state_tracker.user_requests[0],
@@ -150,7 +150,7 @@ class V2ResponseSentenceService:
 
         answer = state_tracker.get_answer()
         if answer:
-            print('answer ', answer)
+            # print('answer ', answer)
             state_tracker.reset_answer()
             state_tracker.remove_user_requests(
                 list(state_tracker.get_first_user_request().keys())[0])
@@ -191,7 +191,7 @@ class V2ResponseSentenceService:
                 value = inform_slots[1]
 
                 if value == "not match available":
-                    return "Thông tin này hiện chưa được cập nhật."
+                    return "Xin lỗi bạn, thông tin này hiện chưa được cập nhật."
 
                 val_in_msg = ''
                 if value:
@@ -204,7 +204,7 @@ class V2ResponseSentenceService:
                     val_in_msg = ', '.join(reformed_value) if isinstance(value, list) else str(value)
                     return sentence.replace('KEYWORD', val_in_msg)
                 else:
-                    "Thông tin này hiện chưa được cập nhật."
+                    "Xin lỗi bạn, thông tin này hiện chưa được cập nhật."
             
 
         elif raw_intent in ['complete', 'thanks', 'done']:
@@ -221,7 +221,7 @@ class V2ResponseSentenceService:
         
         #[FUTURE_FIX] Add pattern and replace this case.
         elif raw_intent == 'no_document':
-            return 'Rất tiếc, không tìm thấy hoạt động nào dựa trên yêu cầu của bạn.'
+            return 'Rất tiếc, tụi mình không tìm thấy hoạt động nào dựa trên yêu cầu của bạn.'
         
         #[FUTURE_FIX] Add pattern for responsing all activities.
         elif raw_intent == 'activities':
@@ -231,7 +231,7 @@ class V2ResponseSentenceService:
                 activities_lst = '\n- '.join([activity['_source']['name'] for activity in activities])
                 return 'Một số hoạt động phù hợp với yêu cầu của bạn là:\n- ' + activities_lst
             else:
-                return "Rất tiếc, không tìm thấy hoạt động nào dựa trên yêu cầu của bạn."
+                return 'Rất tiếc, tụi mình không tìm thấy hoạt động nào dựa trên yêu cầu của bạn.'
             
     def end_dialog(self, user_id):
         self.__redis.remove_by_key('states:' + user_id + ':state_tracker')
