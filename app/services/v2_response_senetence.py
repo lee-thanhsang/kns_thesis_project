@@ -8,8 +8,11 @@ from utils.parser.parser import *
 import pickle
 import threading
 from utils.parser.time_parser import *
+import requests
+import os
 
 SLOT_SEPARATOR = ', '
+ACCESS_TOKEN = os.getenv('ACCESS_TOKEN') or 'EAABebNlZAZBysBAFk0ZC2KKcQhBZALHSh0cSnQ9yAugNGrHZBP8gmpU8xrh1DCU0WymZBWNWJ3Umxbn4dfeSbcpT6jMDiENZCrQ8wtdMYW34PXlcRv2uPzQiXoJTdZARBlt1er0K6lQYEvDVIDUxLX4kwg9Gv8OlLUGHybmehN6NskK7rjiqzyDXqAnXgZCpAzJ8ZD'
 
 class V2ResponseSentenceService:
     def __init__(
@@ -28,12 +31,10 @@ class V2ResponseSentenceService:
         self.__benefit_parser = BenefitParser()
         self.__text_time_parser = TextTimeParser()
 
-    def get_intent_and_slot_from_sentence(self, message, user_id, log):
-        prev_message = self.__redis.get_value_from_key('messages:' + user_id)
-        if prev_message:
-            return 'Chúng mình đang xử lý tin nhắn trước của bạn. Bạn vui lòng đợi phản hồi và không nhập thêm tin nhắn nhé!', user_id     
+    def get_intent_and_slot_from_sentence(self, message, message_id, user_id, log, is_from_facebook=False):
+        if user_id:
+            self.__redis.set_key_value('users:' + user_id + ':messages:' + message_id, message, 120)
 
-        self.__redis.set_key_value('messages:' + user_id, message)
         state_tracker = StateTracker()
         is_cache = False
         if user_id:
@@ -50,6 +51,27 @@ class V2ResponseSentenceService:
         # Log user_id and is_cache here.
         log['user_id'] = str(user_id)
         log['is_cache'] = is_cache
+
+        is_start_session_sent = False
+        if not is_cache and is_from_facebook:
+            data = {
+                'recipient': {
+                    'id': user_id
+                },
+                'message': {
+                    'text': pattern_responce_sentence.start_session[0]
+                }
+            }
+            requests.post("https://graph.facebook.com/v2.6/me/messages?access_token=" + ACCESS_TOKEN, json=data)
+            is_start_session_sent = True
+
+            data = {
+                'recipient': {
+                    'id': user_id
+                },
+                'sender_action': 'typing_on'
+            }
+            requests.post("https://graph.facebook.com/v2.6/me/messages?access_token=" + ACCESS_TOKEN, json=data)
 
         # Log raw request here.
         log['raw_request'] = str(message)
@@ -91,6 +113,9 @@ class V2ResponseSentenceService:
         # If intent is greeting or complete, just return responce
         if intent in ['greeting', 'complete', 'meaningless', 'UNK']:
             self.cache_current_state(user_id, state_tracker, log)
+            if intent == 'greeting' and is_start_session_sent:
+                return '', user_id
+
             return {'intent': intent, 'request_slots': {}, 'inform_slots': {}}, user_id
         
         if intent in ['activities']:
@@ -208,7 +233,7 @@ class V2ResponseSentenceService:
             
 
         elif raw_intent in ['complete', 'thanks', 'done']:
-            sentence = self.get_pattern_responce_sentence('complete')
+            sentence = self.get_pattern_responce_sentence('complete') + ' ' + pattern_responce_sentence.rating[0]
             return sentence
         
         elif raw_intent == 'greeting':
@@ -236,7 +261,7 @@ class V2ResponseSentenceService:
     def end_dialog(self, user_id):
         self.__redis.remove_by_key('states:' + user_id + ':state_tracker')
         self.__redis.remove_by_key('states:' + user_id + ':db_helper')
-        self.__redis.remove_by_key('messages:' + user_id)
+        # self.__redis.remove_by_key('users:' + user_id + ':messages:' + message_id)
         return
 
     def get_pattern_responce_sentence(self, intent):
@@ -252,7 +277,6 @@ class V2ResponseSentenceService:
         self.__redis.set_key_value('states:' + user_id + ':db_helper', pickle.dumps(state_tracker.db_helper))
         delattr(state_tracker, 'db_helper')
         self.__redis.set_key_value('states:' + user_id + ':state_tracker', pickle.dumps(state_tracker))
-        self.__redis.remove_by_key('messages:' + user_id)
 
     def reform_slot_value(self, slot):
         reformed_slot = {}
@@ -262,9 +286,15 @@ class V2ResponseSentenceService:
                 time_ranges = []
                 for sub_slot in sub_slots:
                     text_time = self.__text_time_parser.parse(sub_slot)
-                    time_range = self.__time_parser.parse(text_time)
-                    if time_range is not None:
-                        time_ranges.append(time_range)
+                    if isinstance(text_time, str):
+                        time_range = self.__time_parser.parse(text_time)
+                        if time_range is not None:
+                            time_ranges.append(time_range)
+                    elif isinstance(text_time, list):
+                        for item in text_time:
+                            time_range = self.__time_parser.parse(item)
+                            if time_range is not None:
+                                time_ranges.append(time_range)
 
                 if len(time_ranges) == 1:
                     reformed_slot[key] = [self.__time_parser.to_string(time_ranges[0][0]), self.__time_parser.to_string(time_ranges[0][1])]

@@ -1,3 +1,5 @@
+import os
+
 name = [
     'Hoạt động bạn cần tìm là KEYWORD.',
     'Hoạt động phù hợp cho bạn là KEYWORD.',
@@ -163,4 +165,16 @@ benefit_request = [
     'Tham gia hoạt động nhận được quyền lợi gì?'
 ]
 
+instruction_url = os.getenv('INSTRUCTION_URL') or 'https://kns-chatbot-instruction.tiiny.site'
+rating_url = os.getenv('RATING_URL') or 'https://forms.gle/XyFGPiDN3wcdff1E9'
 
+start_session = [
+"""Chào bạn, mình là chatbot KNS. Mình có thể giúp bạn giải đáp các thắc mắc về hoạt động ngoại khoá.
+- Truy cập link %s để hiểu rõ hơn về mình.
+- Truy cập link %s để đánh giá cho mình.
+""" % (instruction_url, rating_url)
+]
+
+rating = [
+    'Truy cập link %s để đánh giá cho mình, bạn nhé.' % (rating_url)
+]
