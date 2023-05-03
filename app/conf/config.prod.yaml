@@ -22,9 +22,9 @@ clickhouse:
   password: JZDfmD8IAwxJ~
 
 elasticsearch: 
-  cloud_id: thesis:c291dGhlYXN0YXNpYS5henVyZS5lbGFzdGljLWNsb3VkLmNvbSQzOWEwM2E1ZTQwZGY0YmM2YWNiN2MxMWM4Y2I5NTQ3MCQ4OGRmYTI0MzRlMzg0M2M1YWI0NGQ1NTJiYTVlMDc3MA==
+  cloud_id: KNS-ChatBot:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvOjQ0MyRkZmNmYTdiMmZkYTE0YzViYjAxNzQxNDljNTY3ZmQxNyQ0NzAwZTRiNjY1NjQ0NGU0ODEyYTViZDljMzE0Yzc0ZA==
   user: elastic
-  password: 8OyslX8pSV3d0kGDRk7hCY5X
+  password: 80SNzWe713pvu2NNRfQ6pyz3
   url: 
 
 crawler:
