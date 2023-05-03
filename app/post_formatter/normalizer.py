@@ -1,13 +1,13 @@
 from typing import List
 import re
-import nltk
+import underthesea
 import json
 import string
 import underthesea
 
 class V2PostNormalizer:
     def __init__(self):
-        file = open('C:/thesis/kns_fecth_data/app/post_formatter/short_word/short_words.json', 'r', encoding='utf-8')
+        file = open('data/short_words.json', 'r')
         v2_short_words = json.load(file)
         self.__v2_short_words = v2_short_words
 
@@ -32,7 +32,7 @@ class V2PostNormalizer:
 
     def v2_split_sentences(self, post: str) -> List[str]:
         res = []
-        sentences = nltk.sent_tokenize(post)
+        sentences = underthesea.sent_tokenize(post)
         for sentence in sentences:
             sentence = sentence.replace('\n', ' ')
             if len(sentence) > 0:

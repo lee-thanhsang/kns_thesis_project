@@ -179,7 +179,7 @@ class EsClient:
         )
 
     def insert_one(self, index_name, id, data):
-        self.__client.create(index=index_name, id=id, document=data)
+        self.__client.index(index=index_name, id=id, document=data)
 
     def search(self, index_name, query):
         return self.__client.search(index=index_name, query=query, size=1000)

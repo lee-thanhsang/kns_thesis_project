@@ -31,11 +31,6 @@ elasticsearch:
   password:
 
 crawler:
-  links: ['groups/cse.ctxh']
-  path: ''
-  cookie_path: ''
+  fanpage_links: groups/cse.ctxh,BKCSE.Multimedia
+  cookie_path: data/facebook.com_cookies.txt
   page_number: 100
-  lastest_date: 01-01-2023
-
-facebook:
-  verify_token: 

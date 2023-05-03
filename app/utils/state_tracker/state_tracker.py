@@ -121,6 +121,9 @@ class StateTracker:
         # if user_action['intent'] == 'complete':
         #     user_action.update({'intent': 'thanks'})
 
+        if user_action['intent'] in ['greeting']:
+            user_action['intent'] = 'done'
+
         user_act_rep[self.intents_dict[user_action['intent']]] = 1.0
 
         # Create bag of inform slots representation to represent the current user action

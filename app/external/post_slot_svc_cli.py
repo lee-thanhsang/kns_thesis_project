@@ -25,10 +25,14 @@ class PostSlotServiceClient:
         processed_post = []
         for post in posts:
             # Get id of post
-            temp_post = {"id": post["post_id"]}
-            # Normalize content before forwarding it through model 
-            temp_post['content'] = " ".join(normalizer.v2_normalize(post['content']))
-            processed_post.append(temp_post)
+            try:
+                temp_post = {"id": post["post_id"]}
+                # Normalize content before forwarding it through model 
+                temp_post['content'] = " ".join(normalizer.v2_normalize(post['content']))
+                processed_post.append(temp_post)
+                print(str(post) + ' is successful to reformat')
+            except Exception as e:
+                print(str(post) + ' is failed to reformat because ' + str(e))
             
         # Convert JSON type to string type
         processed_post = json.dumps(processed_post)

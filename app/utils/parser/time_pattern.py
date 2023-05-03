@@ -73,7 +73,7 @@ all_time_pattern = {
 
     "month": "tháng[ ]*(\\d\\d?)",
 
-    "year": "năm[ ]*(\\d\\d\\d?\\d?)",
+    "year": "năm[ ]*(\\d\\d\\d?\\d?)|(\\d\\d\\d?\\d?)",
 
     "hour": "(\\d\\d?[ ]*giờ|\\d\\d?[ ]*[hg])",
 }

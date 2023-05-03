@@ -22,7 +22,7 @@ class Server:
         self.__action_decider_svc_cli = ActionDeciderServiceClient(config)
         self.redis = Redis(config)
         self.clickhouse_client = ClickhouseClient(config)
-
+        
 
         self.v2_response_sentence = V2ResponseSentenceService(
             self.__intent_slot_svc_cli,
@@ -32,6 +32,7 @@ class Server:
         )
 
         self.v2_process_post_slot = V2CrawlDataService(
+            config,
             self.__post_slot_svc_cli,
             self.__es_client
         )
