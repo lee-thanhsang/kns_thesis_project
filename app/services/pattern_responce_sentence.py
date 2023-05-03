@@ -149,7 +149,7 @@ complete = [
     'Tạm biệt bạn, chúc bạn có một ngày tốt lành.',
     'Cảm ơn bạn đã tương tác với mình. Chúc bạn có một ngày tốt lành!',
     'Cảm ơn bạn đã cho mình cơ hội được hỗ trợ. Chúc bạn có một ngày tốt lành!',
-    'Cảm ơn bạn đã sử dụng mình? Hi vọng bạn sẽ có một trải nghiệm tốt!',
+    'Cảm ơn bạn đã sử dụng mình. Hi vọng bạn sẽ có một trải nghiệm tốt!',
     'Mình cảm ơn bạn đã ghé thăm. Chúc bạn có một ngày tuyệt vời!'
 ]
 
@@ -162,19 +162,31 @@ time_request = [
 ]
 
 benefit_request = [
-    'Tham gia hoạt động nhận được quyền lợi gì?'
+    'Bạn có biết những quyền lợi nhận được khi tham gia hoạt động không?',
+    'Bạn có thể cung cấp thông tin về quyền lợi của hoạt động cho mình không?'
 ]
 
 instruction_url = os.getenv('INSTRUCTION_URL') or 'https://kns-chatbot-instruction.tiiny.site'
 rating_url = os.getenv('RATING_URL') or 'https://forms.gle/XyFGPiDN3wcdff1E9'
 
 start_session = [
-"""Chào bạn, mình là chatbot KNS. Mình có thể giúp bạn giải đáp các thắc mắc về hoạt động ngoại khoá.
-- Truy cập link %s để hiểu rõ hơn về mình.
-- Truy cập link %s để đánh giá cho mình.
+"""Chào bạn, mình là chatbot KNS. Mình có thể hỗ trợ bạn giải đáp các vấn đề thông tin liên quan đến hoạt động ngoại khóa.
+- Để giúp bạn có trải nhiệm tốt nhất và hiệu quả nhất, bạn vui lòng đọc kĩ hướng dẫn tại đây nhé: %s
+- Mình vẫn đang trong quá trình hoàn thiện nên rất cần đóng góp từ bạn, bạn giúp mình làm đánh giá ở đây nhé: %s
+- Dưới đây là đoạn hội thoại mẫu:
 """ % (instruction_url, rating_url)
 ]
 
 rating = [
     'Truy cập link %s để đánh giá cho mình, bạn nhé.' % (rating_url)
 ]
+
+example = {
+    'name': ['mùa hè xanh', 'xuân tình nguyện', 'hội trại', 'ecse cup', 'cse olympic', 'cse jobfair', 'hậu duệ pascal', 'minathon', 'đại hội'],
+    'host': ['khoa máy tính', 'đh bách khoa', 'clb gamedev', 'đoàn khoa mt'],
+    'time': ['năm nay', 'tháng trước', 'hôm qua', '6/2022', '28/3/2019'],
+    'benefit': ['5 drl', '1 ctxh', 'học hỏi'],
+    'job_description': ['làm đường', 'phát cơm', 'vận chuyển', 'nhập liệu', 'hỗ trợ']
+}
+
+anythings = ['không rõ', 'không biết']

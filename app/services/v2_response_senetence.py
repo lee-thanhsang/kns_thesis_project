@@ -10,9 +10,12 @@ import threading
 from utils.parser.time_parser import *
 import requests
 import os
+import re
+import json
 
 SLOT_SEPARATOR = ', '
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN') or 'EAABebNlZAZBysBAFk0ZC2KKcQhBZALHSh0cSnQ9yAugNGrHZBP8gmpU8xrh1DCU0WymZBWNWJ3Umxbn4dfeSbcpT6jMDiENZCrQ8wtdMYW34PXlcRv2uPzQiXoJTdZARBlt1er0K6lQYEvDVIDUxLX4kwg9Gv8OlLUGHybmehN6NskK7rjiqzyDXqAnXgZCpAzJ8ZD'
+
 
 class V2ResponseSentenceService:
     def __init__(
@@ -31,7 +34,10 @@ class V2ResponseSentenceService:
         self.__benefit_parser = BenefitParser()
         self.__text_time_parser = TextTimeParser()
 
-    def get_intent_and_slot_from_sentence(self, message, message_id, user_id, log, is_from_facebook=False):
+        synonym_file = open('data/abbreviation.json')
+        self.__synonyms = json.load(synonym_file)
+
+    def get_intent_and_slot_from_sentence(self, message, message_id, user_id, log, access_token, is_from_facebook=False):
         if user_id:
             self.__redis.set_key_value('users:' + user_id + ':messages:' + message_id, message, 120)
 
@@ -62,7 +68,23 @@ class V2ResponseSentenceService:
                     'text': pattern_responce_sentence.start_session[0]
                 }
             }
-            requests.post("https://graph.facebook.com/v2.6/me/messages?access_token=" + ACCESS_TOKEN, json=data)
+            requests.post("https://graph.facebook.com/v2.6/me/messages?access_token=" + access_token, json=data)
+
+            data = {
+                'recipient': {
+                    'id': user_id
+                },
+                'message':{
+                    'attachment':{
+                        'type': 'image', 
+                        'payload':{
+                            'attachment_id': '188474244121652'
+                        }
+                    }
+                }
+            }
+            requests.post("https://graph.facebook.com/v2.6/me/messages?access_token=" + access_token, json=data)
+
             is_start_session_sent = True
 
             data = {
@@ -71,12 +93,27 @@ class V2ResponseSentenceService:
                 },
                 'sender_action': 'typing_on'
             }
-            requests.post("https://graph.facebook.com/v2.6/me/messages?access_token=" + ACCESS_TOKEN, json=data)
+            requests.post("https://graph.facebook.com/v2.6/me/messages?access_token=" + access_token, json=data)
 
         # Log raw request here.
         log['raw_request'] = str(message)
 
+        message = message.lower()
+        words = re.split('\s+', message)
+        reformed_words = []
+        for word in words:
+            if word in self.__synonyms.keys():
+                word = self.__synonyms[word]
+            
+            reformed_words.append(word)
+
+        message = ' '.join(reformed_words)
+        print('REFORMED message', message)
+        
         intent, slot = self.__intent_slot_svc_cli.get_intent_and_slot(message)
+        if intent in ['meaningless', 'UNK']:
+            slot = {}
+
         reformed_slot = self.reform_slot_value(slot)
         inform_slots = reformed_slot
         
@@ -138,7 +175,7 @@ class V2ResponseSentenceService:
             self.cache_current_state(user_id, state_tracker, log)
             return {'intent': 'no_document', 'request_slots': {}, 'inform_slots': {}}, user_id
         
-        if state_tracker.round_num > state_tracker.max_round_num:
+        if state_tracker.round_num >= state_tracker.max_round_num:
             state_tracker.reset()
             self.cache_current_state(user_id, state_tracker, log)
             return 'Bạn đã vượt quá số lần hỏi về hoạt động này.', user_id
@@ -208,6 +245,12 @@ class V2ResponseSentenceService:
                 intent = request_slots[0] + '_' + raw_intent
                 
                 sentence = self.get_pattern_responce_sentence(intent)
+
+                examples = pattern_responce_sentence.example.get(request_slots[0])
+                if examples:
+                    quick_replies = random.sample(examples, 2) + random.sample(pattern_responce_sentence.anythings, 1)    
+                    return [sentence, quick_replies]
+
                 return sentence
 
             if raw_intent == 'inform':
