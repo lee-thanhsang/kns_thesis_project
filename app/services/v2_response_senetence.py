@@ -34,7 +34,7 @@ class V2ResponseSentenceService:
         self.__benefit_parser = BenefitParser()
         self.__text_time_parser = TextTimeParser()
 
-        synonym_file = open('data/abbreviation.json')
+        synonym_file = open('data/abbreviation.json', 'r', encoding='utf-8')
         self.__synonyms = json.load(synonym_file)
 
     def get_intent_and_slot_from_sentence(self, message, message_id, user_id, log, access_token, is_from_facebook=False):

@@ -10,6 +10,9 @@ intent_slot_service:
 action_decider_service:
   url: localhost:5003
 
+post_slot_service:
+  url: localhost:5002
+
 redis:
   host: 127.0.0.1
   port: 6379
