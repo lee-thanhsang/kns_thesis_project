@@ -14,10 +14,11 @@ class V2CrawlDataService:
         self.__v2_crawler_post = models.v2_crawl_data_model.V2CrawlerPost()
 
     def crawl_data_from_facebook(self) -> List[Dict]:
+        v2_crawler_post = self.__v2_crawler_post
+        lastest_time = v2_crawler_post.get_time_point()
         all_posts: List[Dict] = []
 
         for page in config.FANPAGE_LINKS:
-            posts_list = []
             posts_from_page = get_posts(
                 page,
                 options={
@@ -29,7 +30,7 @@ class V2CrawlDataService:
                 extra_info=True,
                 pages=100,
                 cookies=config.COOKIE_PATH,
-                latest_date=config.lastest_date
+                latest_date=lastest_time
             )
 
             for post in posts_from_page:
@@ -39,23 +40,20 @@ class V2CrawlDataService:
                     'post_url': post.get('post_url'),
                     'post_time': post.get('time')
                 }
-                posts_list.append(post.get('text'))
                 all_posts.append(item)
 
         if all_posts:
-            self.__v2_crawler_post.create_in_batches(all_posts)
+            v2_crawler_post.create_in_batches(all_posts)
+            self.import_data_to_elastic_search(all_posts)
         
-        config.lastest_date = datetime.now()
-
-        self.import_data_to_elastic_search(all_posts)
+        v2_crawler_post.update_time_point()
 
     def import_data_to_elastic_search(self, posts):
         posts_for_es = self.__post_slot_svc_cli.get_slot_from_posts(posts)
-
         es_client = self.__es_client
         
         for post_for_es in posts_for_es:
             try:
                 es_client.insert_one('thesis', post_for_es['post_id'], post_for_es['activity'])
             except:
-                pass
+                print("Skipped duplicate record.")
