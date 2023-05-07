@@ -6,16 +6,21 @@ from models import *
 import models as models 
 import config as config
 
-
 class V2CrawlDataService:
-    def __init__(self):
+    def __init__(self, post_slot_svc_cli, es_client):
+        self.__post_slot_svc_cli = post_slot_svc_cli
+        self.__es_client = es_client
         self.__v2_crawler_post = models.v2_crawl_data_model.V2CrawlerPost()
 
     def crawl_data_from_facebook(self) -> List[Dict]:
+        v2_crawler_post = self.__v2_crawler_post
+        lastest_time = v2_crawler_post.get_time_point()
+        # Convert to datetime
+        lastest_time = datetime.strptime(lastest_time, "%Y-%m-%d %H:%M:%S")
+
         all_posts: List[Dict] = []
-        all_post_to_return = []
+
         for page in config.FANPAGE_LINKS:
-            posts_list = []
             posts_from_page = get_posts(
                 page,
                 options={
@@ -27,21 +32,30 @@ class V2CrawlDataService:
                 extra_info=True,
                 pages=100,
                 cookies=config.COOKIE_PATH,
-                latest_date=config.lastest_date
+                latest_date=lastest_time
             )
 
             for post in posts_from_page:
                 item = {
+                    'post_id': post.get('post_id'),
                     'content': post.get('text'),
                     'post_url': post.get('post_url'),
                     'time': post.get('time')
                 }
-                posts_list.append(post.get('text'))
                 all_posts.append(item)
-            
-            all_post_to_return.append({page: posts_list})
 
         if all_posts:
-            self.__v2_crawler_post.create_in_batches(all_posts)
-        config.lastest_date = datetime.now()
-        return all_post_to_return
+            v2_crawler_post.create_in_batches(all_posts)
+            self.import_data_to_elastic_search(all_posts)
+        
+        v2_crawler_post.update_time_point()
+
+    def import_data_to_elastic_search(self, posts):
+        posts_for_es = self.__post_slot_svc_cli.get_slot_from_posts(posts)
+        es_client = self.__es_client
+        
+        for post_for_es in posts_for_es:
+            try:
+                es_client.insert_one('thesis', post_for_es['post_id'], post_for_es['activity'])
+            except:
+                print("Skipped duplicate record.")

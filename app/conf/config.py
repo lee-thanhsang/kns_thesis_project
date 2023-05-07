@@ -22,6 +22,9 @@ class Config:
         self.__config['action_decider_service'] = {}
         self.__config['action_decider_service']['url'] = os.getenv('ACTION_DECIDER_SERVICE__URL') or file_config['action_decider_service']['url']
         
+        self.__config['post_slot_service'] = {}
+        self.__config['post_slot_service']['url'] = os.getenv('POST_SLOT_SERVICE__URL') or file_config['post_slot_service']['url']
+
         self.__config['redis'] = {}
         self.__config['redis']['host'] = os.getenv('REDIS__HOST') or file_config['redis']['host']
         self.__config['redis']['port'] = os.getenv('REDIS__PORT') or file_config['redis']['port']
