@@ -16,6 +16,9 @@ class V2CrawlDataService:
     def crawl_data_from_facebook(self) -> List[Dict]:
         v2_crawler_post = self.__v2_crawler_post
         lastest_time = v2_crawler_post.get_time_point()
+        # Convert to datetime
+        lastest_time = datetime.strptime(lastest_time, "%Y-%m-%d %H:%M:%S")
+
         all_posts: List[Dict] = []
 
         for page in config.FANPAGE_LINKS:
