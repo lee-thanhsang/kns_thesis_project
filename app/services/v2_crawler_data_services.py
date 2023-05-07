@@ -1,6 +1,5 @@
 from facebook_scraper import get_posts
 from datetime import datetime
-import json
 
 from typing import List, Dict
 from models import *
@@ -41,7 +40,7 @@ class V2CrawlDataService:
                     'post_id': post.get('post_id'),
                     'content': post.get('text'),
                     'post_url': post.get('post_url'),
-                    'post_time': post.get('time')
+                    'time': post.get('time')
                 }
                 all_posts.append(item)
 

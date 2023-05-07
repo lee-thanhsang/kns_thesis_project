@@ -173,4 +173,3 @@ class PostFormatter:
             activity_result.append(res_post)
 
         return activity_result
-    
