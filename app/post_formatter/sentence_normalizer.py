@@ -49,9 +49,18 @@ def regex(input):
 
 def normalizer(string):
     string = string.replace('_', ' ').lower()
-    for index, abb in enumerate(ABBERIVATIONS):
-        string = string.replace(abb, " " + MEANING_ABBERIVATIONS[index] + " ")
-    string = string.replace('.', '')    # Replace dot Ex: Q. 10, P. 14
+    words = string.split()
+    reformed_words = []
+    for word in words:
+        for index, abb in enumerate(ABBERIVATIONS):
+            if word == abb:
+                word = MEANING_ABBERIVATIONS[index]
+                break
+
+        reformed_words.append(word)
+    # string = string.replace('.', '')    # Replace dot Ex: Q. 10, P. 14
+
+    string = " ".join(reformed_words)
     string = " ".join(string.split())
     string = " ".join(regex(string).split())
     

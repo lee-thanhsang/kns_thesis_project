@@ -4,10 +4,11 @@ import underthesea
 import json
 import string
 import underthesea
+import string
 
 class V2PostNormalizer:
     def __init__(self):
-        file = open('data/short_words.json', 'r')
+        file = open('data/abbreviation.json', 'r')
         v2_short_words = json.load(file)
         self.__v2_short_words = v2_short_words
 
@@ -20,13 +21,14 @@ class V2PostNormalizer:
             sentence = self.v2_remove_special_characters(sentence)
             sentence = self.v2_remove_emoji(sentence)
             sentence = self.v2_remove_punctuations(sentence)
-            sentence = self.v2_replace_short_words(sentence)
             sentence = self.v2_get_lower_case(sentence)
+            sentence = self.v2_replace_short_words(sentence)
             sentence = self.v2_strip(sentence)
             sentence = self.v2_tokenize(sentence)
-            sentence = self.v2_remove_punctuations(sentence)
+            # sentence = self.v2_remove_punc(sentence)
             if len(sentence) > 0:
                 res.append(sentence)
+        print(res)
 
         return res
 
@@ -123,3 +125,14 @@ class V2PostNormalizer:
 
     def v2_tokenize(self, sentence) -> str:
         return underthesea.word_tokenize(sentence, format='text')
+    
+    def v2_remove_punc(self, sentence) -> str:
+        words = sentence.split()
+        reformed_words = []
+        for word in words:
+            if word in string.punctuation:
+                continue
+
+            reformed_words.append(word)
+
+        return ' '.join(reformed_words)
