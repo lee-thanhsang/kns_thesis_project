@@ -138,7 +138,7 @@ class PostFormatter:
             res_time = self.__get_time(time_start, time_end)
 
             for k, v in post['activity'].items():
-                if k != 'time:start' and k != 'time:end':
+                if k not in ['time:start', 'time:end', 'register:time:start', 'register:time:end']:
                     if k in self.__key_multiple_value:
                         res_post['activity'][k] = list(map(lambda x: normalizer(x).strip(), v.split(',')))
                     elif k in self.__key_benefit:

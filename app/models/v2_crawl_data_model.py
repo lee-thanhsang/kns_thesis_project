@@ -47,6 +47,8 @@ class V2CrawlerPost(V2Database):
     def update_time_point(self):
         now_string = f'{datetime.now():%Y-%m-%d %H:%M:%S%z}'
 
+        V2TimePointCrawlData.objects.raw({'key': 'kns_time_point'}).delete()
+
         V2TimePointCrawlData.objects.raw({'key': 'kns_time_point'}).update(
             {"$set": {"time_point": now_string}},
             upsert=True

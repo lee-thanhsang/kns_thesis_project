@@ -108,13 +108,13 @@ class V2ResponseSentenceService:
             reformed_words.append(word)
 
         message = ' '.join(reformed_words)
-        print('REFORMED message', message)
         
         intent, slot = self.__intent_slot_svc_cli.get_intent_and_slot(message)
         if intent in ['meaningless', 'UNK']:
             slot = {}
 
         reformed_slot = self.reform_slot_value(slot)
+        print('SLOT ', slot, reformed_slot)
         inform_slots = reformed_slot
         
         # Log intent, slot and reformed slot here.
@@ -323,6 +323,14 @@ class V2ResponseSentenceService:
 
     def reform_slot_value(self, slot):
         reformed_slot = {}
+        if 'time:start' in slot.keys() and 'time:end' in slot.keys():
+            slot['time:start'] = slot['time:start'] + SLOT_SEPARATOR + slot['time:end']
+            slot.pop('time:end')
+
+        if 'register:time:start' in slot.keys() and 'register:time:end' in slot.keys():
+            slot['register:time:start'] = slot['register:time:start'] + SLOT_SEPARATOR + slot['register:time:end']
+            slot.pop('register:time:end')         
+
         for key in slot.keys():
             if key in ['time:start', 'time:end', 'register:time:start', 'register:time:end']:
                 sub_slots = slot[key].split(SLOT_SEPARATOR)
@@ -333,7 +341,7 @@ class V2ResponseSentenceService:
                         time_range = self.__time_parser.parse(text_time)
                         if time_range is not None:
                             time_ranges.append(time_range)
-                    elif isinstance(text_time, list):
+                    elif isinstance(text_time, tuple):
                         for item in text_time:
                             time_range = self.__time_parser.parse(item)
                             if time_range is not None:

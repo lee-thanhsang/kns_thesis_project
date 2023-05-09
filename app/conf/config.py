@@ -42,6 +42,10 @@ class Config:
         self.__config['elasticsearch']['user'] = os.getenv('ELASTICSEARCH__USER') or file_config['elasticsearch']['user']
         self.__config['elasticsearch']['password'] = os.getenv('ELASTICSEARCH__PASSWORD') or file_config['elasticsearch']['password']
        
+        self.__config['crawler'] = {}
+        self.__config['crawler']['fanpage_links'] = os.getenv('CRAWLER__FANPAGE_LINKS') or file_config['crawler']['fanpage_links']
+        self.__config['crawler']['cookie_path'] = os.getenv('CRAWLER__COOKIE_PATH') or file_config['crawler']['cookie_path']
+        self.__config['crawler']['page_number'] = os.getenv('CRAWLER__PAGE_NUMBER') or file_config['crawler']['page_number']
 
     def get(self):
         return self.__config
