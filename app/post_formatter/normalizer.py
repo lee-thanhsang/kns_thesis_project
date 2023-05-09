@@ -25,6 +25,7 @@ class V2PostNormalizer:
             sentence = self.v2_replace_short_words(sentence)
             sentence = self.v2_strip(sentence)
             sentence = self.v2_tokenize(sentence)
+            sentence = self.v2_remove_punctuations(sentence, regex=False)
             # sentence = self.v2_remove_punc(sentence)
             if len(sentence) > 0:
                 res.append(sentence)
@@ -85,11 +86,15 @@ class V2PostNormalizer:
             '(#.+|(:\)+)|(:D+)|(:\(+)|(:\'\(+)|(:P+)|(O:\))|(3:\))|(o.O+)|(;\)+)|(:\/ )|(>:O)|(:O+)|(-_+-)|(:\*)|(^_+^)|(8-\)+)|(8\|+)|(>:\(+)|(:v+)|(:3+)|(\(y\))|(<\(\"\))|(\(^^^\))|(==+)|(:\|\])|(:poop:)|(:putnam:)|(<3+))')
         return re.sub(special_character, '', sentence)
 
-    def v2_remove_punctuations(self, sentence: str) -> str:
-        split_sentence = ' '.join(re.findall(
-            r'#.+|\d{1,4}[/.:]\d{1,4}[/.:]?\d{0,4}|\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b|[\w]+&[\w]+|(?:https?://|]{0,1})(?:[-\w./]|(?:%[\da-fA-F]{2}))+[\w/]{1}|#[.]+|\w+|[^\s\w]', sentence))
+    def v2_remove_punctuations(self, sentence: str, regex=True) -> str:
+        if regex:
+            split_sentence = ' '.join(re.findall(
+                r'#.+|\d{1,4}[/.:]\d{1,4}[/.:]?\d{0,4}|\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b|[\w]+&[\w]+|(?:https?://|]{0,1})(?:[-\w./]|(?:%[\da-fA-F]{2}))+[\w/]{1}|#[.]+|\w+|[^\s\w]', sentence))
+        else:
+            split_sentence = sentence
+
         for punctuation in string.punctuation:
-            if punctuation in [':', ',', '.']:
+            if punctuation in [':', ',', '.', '@', '#', '$', '%', '&']:
                 continue
             while len(split_sentence) != len(split_sentence.replace(' '+punctuation+' ', ' ')):
                 split_sentence = split_sentence.replace(

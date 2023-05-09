@@ -35,9 +35,11 @@ class PostSlotServiceClient:
                 print(str(post) + ' is failed to reformat because ' + str(e))
             
         # Convert JSON type to string type
+        print(processed_post)
         processed_post = json.dumps(processed_post)
         result = self.__stub.PostSlotRecognize(PostSlotRecognizeRequest(message=processed_post))
         # Convert string type to JSON type, After that, Call PostFormatter to format to Elastic Search standard.
+        print(json.loads(result.message))
         data_for_es = es_formatter.get_activities(json.loads(result.message))
         
         return data_for_es

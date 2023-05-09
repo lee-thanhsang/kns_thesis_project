@@ -57,7 +57,7 @@ class V2CrawlDataService:
             v2_crawler_post.create_in_batches(all_posts)
             self.import_data_to_elastic_search(all_posts)
         
-        v2_crawler_post.update_time_point()
+        # v2_crawler_post.update_time_point()
 
     def import_data_to_elastic_search(self, posts):
         posts_for_es = self.__post_slot_svc_cli.get_slot_from_posts(posts)

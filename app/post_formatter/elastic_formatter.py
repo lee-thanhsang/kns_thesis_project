@@ -42,6 +42,8 @@ class PostFormatter:
         res_date = []
         parts_of_time = time_value.split(',')
         for part in parts_of_time:
+            if ' : ' in part:
+                continue
             res_parts = self.__time_parser.time_parser(part)
             if res_parts:
                 res_parts = res_parts.split()
@@ -61,7 +63,7 @@ class PostFormatter:
                             else:
                                 res_part = "{:02}-{:02}-{:04}".format(*parts_of_date)
                             res_date.append(res_part)
-                    
+        print(res_hour, res_date)
         return res_hour, res_date
 
     def __get_time(self, time_start: str, time_end: str) -> List[List[str]]:
@@ -96,7 +98,7 @@ class PostFormatter:
                         res_time.append([start, end])
                         
         # case: have date only
-        elif len(hours_time_start) == 0 and len(date_time_start) == 1:
+        elif len(hours_time_start) == 0 and len(date_time_start) >= 1:
             time_start = date_time_start[0]
             time_end = get_time_end(hours_time_end, date_time_end, date_time_start)
             res_time.append([time_start, time_end])
@@ -144,10 +146,13 @@ class PostFormatter:
                     elif k in self.__key_benefit:
                         res_post['activity'][k] = self.__get_ctxh_drl(v)
                     elif 'time' in k:
+                        print('here')
                         time_hours, time_date = self.__get_hour_date(v)
                         if time_date:
                             if self.__check_time_format(time_date[0]):
                                 res_post['activity'][k] = time_date[0]
+                                if time_hours:
+                                    res_post['activity'][k] = time_hours + ' ' + time_date[0]
                     else:
                         value = max(v.split(','), key=len).strip()
                         value = normalizer(value) if k != 'register:way' else value.replace('_', ' ')
