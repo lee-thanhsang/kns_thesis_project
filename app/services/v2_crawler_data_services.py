@@ -63,13 +63,14 @@ class V2CrawlDataService:
         posts_for_es = self.__post_slot_svc_cli.get_slot_from_posts(posts)
         es_client = self.__es_client
         
+
         for post_for_es in posts_for_es:
             try:
                 post_for_es['activity']['timestamp'] = datetime.now()
                 if 'name' not in post_for_es['activity']:
                     continue
 
-                if 'meetgooglecom' in post_for_es['activity']['name']:
+                if 'google' in post_for_es['activity']['name']:
                     continue
 
                 es_client.insert_one('thesis', post_for_es['post_id'], post_for_es['activity'])

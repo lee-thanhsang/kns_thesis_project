@@ -7,6 +7,8 @@ from post_formatter.time_parser import TimeParser
 from post_formatter.time_pattern import composed_pattern
 from post_formatter.sentence_normalizer import normalizer
 
+import copy
+
 class TimeofPostParser(TimeParser):
     def __init__(self):
         super().__init__()
@@ -90,7 +92,7 @@ class PostFormatter:
             
         # case: 2 hours - 1 date (Multiple shift per day)
         elif len(hours_time_start) >= 2:
-            if len(date_time_start) == 1:
+            if len(date_time_start) >= 1:
                 if len(hours_time_end) == len(hours_time_end) and len(date_time_end) == 0:
                     for i, v in enumerate(hours_time_start):
                         start = v + ' ' + date_time_start[0]
@@ -164,17 +166,19 @@ class PostFormatter:
             number_of_shifts = len(res_time)
 
             for index in range(number_of_shifts):
+                post = copy.deepcopy(res_post)
                 if number_of_shifts >= 2:
-                    res_post['activity']['name'] = "{} ca {}".format(res_post['activity']['name'], index + 1)
+                    post['activity']['name'] = "{} ca {}".format(post['activity']['name'], index + 1)
+                    post['post_id'] += ':' + str(index) 
                     
                 time = res_time[index]
                 if time[0]:
                     if self.__check_time_format(time[0]):
-                        res_post['activity']['time:start'] = time[0]
+                        post['activity']['time:start'] = time[0]
                 if time[1]:
                     if self.__check_time_format(time[1]):
-                        res_post['activity']['time:end'] = time[1]
+                        post['activity']['time:end'] = time[1]
 
-            activity_result.append(res_post)
+                activity_result.append(post)
 
         return activity_result
